@@ -1,27 +1,22 @@
-# ui.R
 
 shinyUI(fluidPage(
-  titlePanel("censusVis"),
   
+  # Application title
+  titlePanel("Outliers control"),
+  
+  # Sidebar with a slider input for the number of bins
   sidebarLayout(
     sidebarPanel(
-      helpText("Create demographic maps with 
-               information from the 2010 US Census."),
-      
-      selectInput("var", 
-                  label = "Choose a variable to display",
-                  choices = c("Percent White", "Percent Black",
-                              "Percent Hispanic", "Percent Asian"),
-                  selected = "Percent White"),
-      
-      sliderInput("range", 
-                  label = "Range of interest:",
-                  min = 0, max = 100, value = c(0, 100))
-      ),
+      sliderInput("bins",
+                  "Number of bins:",
+                  min = 1,
+                  max = 50,
+                  value = 30)
+    ),
     
+    # Show a plot of the generated distribution
     mainPanel(
-      textOutput("text1"),
-      textOutput("text2")
+      plotOutput("distPlot")
     )
   )
 ))

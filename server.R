@@ -1,16 +1,19 @@
-# server.R
 
-shinyServer(
-  function(input, output) {
+# Define server logic required to draw a histogram
+shinyServer(function(input, output) {
+  
+  # Expression that generates a histogram. The expression is
+  # wrapped in a call to renderPlot to indicate that:
+  #
+  #  1) It is "reactive" and therefore should re-execute automatically
+  #     when inputs change
+  #  2) Its output type is a plot
+  
+  output$barplot <- renderPlot({
+    x    <- faithful[, 2]  # Old Faithful Geyser data
+    bins <- seq(min(x), max(x), length.out = input$bins + 1)
     
-    output$text1 <- renderText({ 
-      paste("You have selected", input$var)
-    })
-    
-    output$text2 <- renderText({ 
-      paste("You have chosen a range that goes from",
-            input$range[1], "to", input$range[2])
-    })
-    
-  }
-)
+    # draw the histogram with the specified number of bins
+    hist(x, breaks = bins, col = 'darkgray', border = 'white')
+  })
+})
