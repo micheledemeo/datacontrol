@@ -1,22 +1,18 @@
 
 shinyUI(fluidPage(
   
-  # Application title
-  titlePanel("Outliers control"),
+  titlePanel("Outliers control with boxplot"),
   
-  # Sidebar with a slider input for the number of bins
   sidebarLayout(
+    
     sidebarPanel(
-      sliderInput("bins",
-                  "Number of bins:",
-                  min = 1,
-                  max = 50,
-                  value = 30)
+      
+      #selectInput("var", label = "Choose a variable to analyze", choices =var_cho, selected = 'carbur')
+      uiOutput("var"), 
+      uiOutput("strato")
+      
     ),
     
-    # Show a plot of the generated distribution
-    mainPanel(
-      plotOutput("distPlot")
-    )
+    mainPanel( plotOutput("boxplot") )
   )
 ))

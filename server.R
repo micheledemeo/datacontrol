@@ -1,19 +1,28 @@
+#runapp:
+pastedir=function(...) paste(..., sep="/")
+library(data.table)
+library(ggplot2)
+pri=fread(pastedir(getwd(),"input/pri.txt") )
+camp=fread(pastedir(getwd(),"input/campionari.txt") )
+setkey(camp, batcod)
+setkey(pri, batcod)
+camp=pri[,.(batcod, strato)][camp]
+var=camp[,unique(cod_variable)]
+strato=camp[,unique(strato)]
+strato=strato[order(strato)]
 
-# Define server logic required to draw a histogram
 shinyServer(function(input, output) {
   
-  # Expression that generates a histogram. The expression is
-  # wrapped in a call to renderPlot to indicate that:
-  #
-  #  1) It is "reactive" and therefore should re-execute automatically
-  #     when inputs change
-  #  2) Its output type is a plot
+  input_var=reactive({ input$var  })
+  input_strato=reactive({ input$strato  })
   
-  output$barplot <- renderPlot({
-    x    <- faithful[, 2]  # Old Faithful Geyser data
-    bins <- seq(min(x), max(x), length.out = input$bins + 1)
+  output$var=renderUI({  selectInput("var", label = "Choose a variable to analyze", choices =var, selected = var[1] ) })
+  output$strato=renderUI({  selectInput("strato", label = "Choose a strata to analyze", choices =strato, selected = strato[1] ) })
+  
+  output$boxplot = renderPlot({
     
-    # draw the histogram with the specified number of bins
-    hist(x, breaks = bins, col = 'darkgray', border = 'white')
+    camp[ cod_variable==input_var() & strato==input_strato(),
+         ggplot(.SD, aes(x=cod_variable, y= values, fill=cod_variable)) + geom_boxplot() + guides(fill=FALSE), 
+         .SDcols=c('cod_variable', 'values') ]
   })
 })
