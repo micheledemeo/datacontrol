@@ -7,7 +7,6 @@ shinyUI(fluidPage(
     
     sidebarPanel(
       
-      #selectInput("var", label = "Choose a variable to analyze", choices =var_cho, selected = 'carbur')
       uiOutput("var"), 
       uiOutput("strato")
       
