@@ -1,5 +1,5 @@
 # inizialization for wd and ibraries
-#wd=getwd()
+require(shiny)
 require(data.table)
 require(reshape2)
 require(ggplot2)

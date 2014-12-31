@@ -1,4 +1,5 @@
 # costi import ####
+wd=getwd()
 d=fread_mysql(tbname = 'schede_mensili')
 d=d[anno==2014]
 vars=c('id','giorni_mare','retribuzioni_lorde','oneri_sociali','irpef','inail_malattie','inail_infortuni','costo_carburante','costo_lubrificante','diritti_mercato_ittico','provvigioni_grossista','provvigioni_astatore','facchinaggio_prodotti_ittici','spese_per_automezzi','spese_per_ghiaccio','cassette_e_imballaggio','altri_costi','spese_verniciatura','manutenzione_ordinaria','spese_per_fabbro_e_carpenterie','spese_alaggio','riparazioni_impianto_elettrico','riparazioni_impianto_meccanico','riparazioni_impianto_idraulico','riparazione_radar','riparazione_reti','riparazione_frigoriferi','acquisto_cavi','spedizione_pratiche_doganali','spese_panatica_di_bordo','acquisto_nuovi_ami','indumenti_di_lavoro_per_equipaggio','acquisto_esche','spese_telefonia_di_bordo','spese_tv_di_bordo','spese_varie_per_materiale_dotazione_di_bordo','altri_costi_di_produzione')
@@ -18,7 +19,7 @@ aggrega_var=fread(pastedir(wd,"input/aggrega_var"),select = c('variable','var'))
 setkey(aggrega_var, variable)
 d=aggrega_var[d]
 rm(aggrega_var)
-d[is.na(var),var:="costi_non_classificati"]
+d[is.na(var),var:="unclassified"]
 d=d[,list(value=sum(value)), keyby=.(id,var)]
 setkey(ids, id)
 d=ids[d]

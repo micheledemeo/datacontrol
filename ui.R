@@ -1,4 +1,4 @@
-
+wd=getwd()
 shinyUI(fluidPage(
   
   titlePanel("Outliers control with boxplot"),
@@ -10,6 +10,7 @@ shinyUI(fluidPage(
       uiOutput("var")
       ,uiOutput("strato")
       ,checkboxInput(inputId = "check_gio",label = "Filtra con giorni_mare>0", value=T)
+      
       
     ),
     
