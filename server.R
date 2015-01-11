@@ -23,18 +23,19 @@ shinyServer(function(input, output) {
   
   output$strato=renderUI({  selectInput("strato", label = "Filtra strato:", choices =strato, selected = NULL, multiple = T ) })
   
-  output$boxplot = renderPlot({
-    
-    if (  !is.null( input_strato() )  ) {
-      
-      d[giorni_mare>(input_check_gio()-1) & id_strato %in% input_strato() & var %in% input_var() ,ggplot(.SD, aes(x= var,y=value)) +geom_boxplot(outlier.size=3 ,outlier.colour="red", fill="grey",colour = "blue") + xlab("") ]
-  
-    } else {
-      
-      d[giorni_mare>(input_check_gio()-1) & var %in% input_var() & codsis199 %in% input_codsis() & codlft199 %in% input_codlft(), ggplot(.SD, aes(x= var,y=value)) +geom_boxplot(outlier.size=3 ,outlier.colour="red", fill="grey",colour = "blue") + xlab("")]
-        
+  d_panel=reactive({
+    if (  !is.null( input_strato() )  ) {    
+        d[giorni_mare>(input_check_gio()-1) & id_strato %in% input_strato() & var %in% input_var()]    
+      } else {    
+        d[giorni_mare>(input_check_gio()-1) & var %in% input_var()]    
     }
-      
-    
   })
+
+  output$boxplot = renderPlot({   
+    d_panel()[ ,ggplot(.SD, aes(x= var,y=value)) +geom_boxplot(outlier.size=3 ,outlier.colour="red", fill="grey",colour = "blue") + xlab("") ]
+  })
+  
+  #output$table_data = renderTable({head(d_panel() )})
+  output$table_data = renderDataTable({d_panel()})
+  
 })
