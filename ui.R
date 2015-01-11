@@ -14,21 +14,27 @@ shinyUI(fluidPage(
       sidebarPanel(
       
       uiOutput("var")
+      ,br()
+      ,br()
       ,uiOutput("codsis")
       ,uiOutput("codlft")
+      ,br()
+      ,br()
       ,uiOutput("strato")
+      ,br()
       ,checkboxInput(inputId = "check_gio",label = "Fishing days>0", value=T)
+
       
       
     ),
 
     
-  mainPanel(  
+  mainPanel(
     tabsetPanel(
-                tabPanel("Outliers detection: abs values", 
+                tabPanel("Outliers detection: abs values",
                          plotOutput("boxplot") , 
                          dataTableOutput("table_data")), 
-                tabPanel("Outliers detection: par values"), 
+                tabPanel("Outliers detection: par values", textOutput("text") ), 
                 tabPanel("Profit and loss account - %"))
     )
   )

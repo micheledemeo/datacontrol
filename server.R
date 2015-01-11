@@ -4,7 +4,6 @@ source( pastedir(getwd() , "source/ini_data.R") )
 
 var=d[,unique(var)]
 strato=d[,unique(id_strato)]
-regione=d[,unique(regione)]
 codsis=d[,unique(codsis199)]
 codlft=d[,unique(codlft199)]
 
@@ -17,17 +16,23 @@ shinyServer(function(input, output) {
   input_check_gio=reactive({ input$check_gio  })
   
   #output$var=renderUI({  checkboxGroupInput("var", label = "Choose a variable to analyze", choices =var , selected=var) })
-  output$var=renderUI({  selectInput("var", label = "Scegli variabili di costo:", choices =var, selected = var, multiple = T ) })  
-  output$codsis=renderUI({  selectInput("codsis", label = "Filtra sistema di pesca:", choices =codsis, selected = codsis, multiple = T ) })
-  output$codlft=renderUI({  selectInput("codlft", label = "Filtra classe lft:", choices =codlft, selected = codlft, multiple = T ) })
-  
-  output$strato=renderUI({  selectInput("strato", label = "Filtra strato:", choices =strato, selected = NULL, multiple = T ) })
+  output$var=renderUI({  selectInput("var", label = "Select the variables:", choices =var, selected = var, multiple = T ) })  
+  output$codsis=renderUI({  
+    codsis_selection=if(is.null(input_strato())) codsis else NULL    
+    selectInput("codsis", label = "Apply a filter on gear type:", choices =codsis, selected = codsis_selection, multiple = T ) 
+  })
+  output$codlft=renderUI({  
+    codlft_selection=if(is.null(input_strato())) codlft else NULL
+    selectInput("codlft", label = "Apply a filter on LOA:", choices =codlft, selected = codlft_selection, multiple = T ) 
+  })
+ 
+  output$strato=renderUI({ selectInput("strato", label = "Select the strata:", choices =strato, selected = NULL, multiple = T ) })
   
   d_panel=reactive({
     if (  !is.null( input_strato() )  ) {    
-        d[giorni_mare>(input_check_gio()-1) & id_strato %in% input_strato() & var %in% input_var()]    
+        d[giorni_mare>(input_check_gio()-1) & var %in% input_var() & id_strato %in% input_strato() ]    
       } else {    
-        d[giorni_mare>(input_check_gio()-1) & var %in% input_var()]    
+        d[giorni_mare>(input_check_gio()-1) & var %in% input_var() & codsis199 %in% input_codsis() & codlft199 %in% input_codlft()]    
     }
   })
 
@@ -37,5 +42,7 @@ shinyServer(function(input, output) {
   
   #output$table_data = renderTable({head(d_panel() )})
   output$table_data = renderDataTable({d_panel()})
+  
+  output$text=renderText({if(is.null(input_strato())) 0 else input_strato() })
   
 })
