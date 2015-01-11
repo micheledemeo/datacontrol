@@ -1,47 +1,38 @@
 wd=getwd()
 shinyUI(fluidPage(
   
-  titlePanel("Outliers control with boxplot"),
-  
+  #titlePanel("Nicoda Project"),
+  br(),
+  br(),
+  img(src="nicoda_logo.jpg"),
+  br(),
+  br(),
+  br(),
     
   sidebarLayout(
     
       sidebarPanel(
-        
-        fluidRow(
-          column(12,
-                 h5("Test page:"),
-                 actionButton("action", label = "Action"),
-                 br())
-          
-        ),
-        
-        br(),
       
       uiOutput("var")
       ,uiOutput("codsis")
       ,uiOutput("codlft")
       ,uiOutput("strato")
-      ,checkboxInput(inputId = "check_gio",label = "Filtra con giorni_mare>0", value=T)
+      ,checkboxInput(inputId = "check_gio",label = "Fishing days>0", value=T)
       
       
     ),
 
     
-    mainPanel( plotOutput("boxplot") ),
-    
-    
-  ),
-  
-  fluidRow(
-  
-    column(1,
-           h3("Test page:"),
-           actionButton("action", label = "Action"),
-           br(),
-           br(), 
-           actionButton("action2", label = "Action2"))
- 
+  mainPanel(  
+    tabsetPanel(
+                tabPanel("Outliers detection: abs values", 
+                         plotOutput("boxplot") , 
+                         dataTableOutput("table_data")), 
+                tabPanel("Outliers detection: par values"), 
+                tabPanel("Profit and loss account - %"))
+    )
   )
+  
+  
 ))
 
