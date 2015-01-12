@@ -18,6 +18,7 @@ shinyUI(fluidPage(
       ,br()
       ,uiOutput("codsis")
       ,uiOutput("codlft")
+      ,actionButton("reset", "Reset")
       ,br()
       ,br()
       ,uiOutput("strato")

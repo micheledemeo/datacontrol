@@ -7,7 +7,7 @@ strato=d[,unique(id_strato)]
 codsis=d[,unique(codsis199)]
 codlft=d[,unique(codlft199)]
 
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
   
   input_var=reactive({ input$var  })
   input_codsis=reactive({ input$codsis  })
@@ -17,16 +17,25 @@ shinyServer(function(input, output) {
   
   #output$var=renderUI({  checkboxGroupInput("var", label = "Choose a variable to analyze", choices =var , selected=var) })
   output$var=renderUI({  selectInput("var", label = "Select the variables:", choices =var, selected = var, multiple = T ) })  
-  output$codsis=renderUI({  
-    codsis_selection=if(is.null(input_strato())) codsis else NULL    
-    selectInput("codsis", label = "Apply a filter on gear type:", choices =codsis, selected = codsis_selection, multiple = T ) 
-  })
-  output$codlft=renderUI({  
-    codlft_selection=if(is.null(input_strato())) codlft else NULL
-    selectInput("codlft", label = "Apply a filter on LOA:", choices =codlft, selected = codlft_selection, multiple = T ) 
-  })
- 
+  output$codsis=renderUI({selectInput("codsis", label = "Apply a filter on gear type:", choices =codsis, selected = codsis, multiple = T ) })
+  output$codlft=renderUI({ selectInput("codlft", label = "Apply a filter on LOA:", choices =codlft, selected = codlft, multiple = T ) })
+  
   output$strato=renderUI({ selectInput("strato", label = "Select the strata:", choices =strato, selected = NULL, multiple = T ) })
+  
+  observe({ if (!is.null(input_codsis()) | !is.null(input_codlft())  ) updateSelectInput(session, "strato", choices =strato, selected = NULL) })
+  observe({ 
+    if (!is.null(input_strato()) ) {
+    updateSelectInput(session, "codsis", choices =codsis, selected = NULL) 
+    updateSelectInput(session, "codlft", choices =codlft, selected = NULL)
+    }
+  })
+  
+  observe({ 
+    if (input$reset>0) {
+      updateSelectInput(session, "codsis", choices =codsis, selected = codsis) 
+      updateSelectInput(session, "codlft", choices =codlft, selected = codlft)
+    }
+  })
   
   d_panel=reactive({
     if (  !is.null( input_strato() )  ) {    
