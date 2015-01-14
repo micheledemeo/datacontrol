@@ -44,14 +44,33 @@ shinyServer(function(input, output, session) {
         d[giorni_mare>(input_check_gio()-1) & var %in% input_var() & codsis199 %in% input_codsis() & codlft199 %in% input_codlft()]    
     }
   })
-
+  
+  facet_vars=reactive({ if (  !is.null( input_strato() )  ) "id_strato" else "codsis199"})  
+    
+  d_pie=reactive({
+    
+    d_pie=d_panel()[,list(value=as.numeric(sum(value)) ),  keyby=c(facet_vars(),'var')]
+    d_pie2=d_pie[,list(tot=sum(value) ), keyby=c(facet_vars())]      
+    d_pie[d_pie2, value:=round(ifelse(tot==0,0,value/tot),3)]      
+    d_pie[,pie_label_position:=cumsum(value), by=c(facet_vars() )]
+    d_pie[,pie_label_position:=pie_label_position-.5*value]
+    d_pie
+    
+  })
+  
+  output$pie = renderPlot({   
+    d_pie()[,ggplot(.SD, aes(x="",y=value,fill=var)) + geom_bar(stat="identity") + coord_polar(theta="y") + facet_wrap(~eval(parse(text=facet_vars()))) + geom_text(aes(label = paste0(round(100*value,0), "%"), y=pie_label_position) )]
+  })
+  
   output$boxplot = renderPlot({   
     d_panel()[ ,ggplot(.SD, aes(x= var,y=value)) +geom_boxplot(outlier.size=3 ,outlier.colour="red", fill="grey",colour = "blue") + xlab("") ]
   })
   
   #output$table_data = renderTable({head(d_panel() )})
   output$table_data = renderDataTable({d_panel()})
+  output$pie_data = renderDataTable({d_pie()[,pie_label_position:=NULL]})
   
-  output$text=renderText({if(is.null(input_strato())) 0 else input_strato() })
+  #output$text=renderPrint({ c(facet_vars(),'var') })
+  #output$table_data2 = renderDataTable({ d_pie() })
   
 })
