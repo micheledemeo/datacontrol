@@ -40,12 +40,12 @@ shinyUI(fluidPage(
                          plotOutput("boxplot") , 
                          dataTableOutput("table_data")), 
                 
-                tabPanel("Outliers detection: par values",plotOutput("pie"),dataTableOutput("pie_data") ), 
-                
-                tabPanel("Profit and loss account - %"))
+                tabPanel("Profit and loss account - %"),
+    
+                tabPanel("% control of costs",plotOutput("pie"),dataTableOutput("pie_data") )
     )
   )
   
   
-))
+)))
 
