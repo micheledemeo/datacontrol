@@ -41,15 +41,21 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  d_panel=reactive({
-    if (  !is.null( input_strato() )  ) {    
-        d[giorni_mare>(input_check_gio()-1) & var %in% input_var() & id_strato %in% input_strato() ]    
-      } else {    
-        d[giorni_mare>(input_check_gio()-1) & var %in% input_var() & codsis199 %in% input_codsis() & codlft199 %in% input_codlft()]    
-    }
-  })
+  # considering updateSelectInput, the last else in d_panel will never be true
+  d_panel=reactive({ if (  !is.null( input_strato() ) ) d[giorni_mare>(input_check_gio()-1) & var %in% input_var() & id_strato %in% input_strato() ]
+                else if ( !is.null(input_codsis()) &  is.null(input_codlft()) )  d[giorni_mare>(input_check_gio()-1) & var %in% input_var() & codsis199 %in% input_codsis()]
+                else if ( is.null(input_codsis()) &  !is.null(input_codlft()) )  d[giorni_mare>(input_check_gio()-1) & var %in% input_var() & codlft199 %in% input_codlft()]
+                else if ( !is.null(input_codsis()) &  !is.null(input_codlft()) ) d[giorni_mare>(input_check_gio()-1) & var %in% input_var() & codsis199 %in% input_codsis() & codlft199 %in% input_codlft()]  
+                else d[0]
+  }) 
   
-  facet_vars=reactive({ if (  !is.null( input_strato() )  ) "id_strato" else c("codsis199")})  
+  # considering updateSelectInput, the last else in facet will never be true
+  facet_vars=reactive({ if (  !is.null( input_strato() ) & ( is.null(input_codsis()) | is.null(input_codlft())) ) "id_strato" 
+                        else if ( !is.null(input_codsis()) &  is.null(input_codlft()) ) "codsis199"
+                        else if ( is.null(input_codsis()) &  !is.null(input_codlft()) ) "codlft199"
+                        else if ( !is.null(input_codsis()) &  !is.null(input_codlft()) ) c("codsis199","codlft199") 
+                        else ( c("id_strato","codsis199","codlft199")  )
+                    })  
     
   d_pie=reactive({
     
@@ -63,7 +69,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$pie = renderPlot({   
-    if (nrow(d_pie())>0)  d_pie()[,ggplot(.SD, aes(x="",y=value,fill=var)) + geom_bar(stat="identity") + coord_polar(theta="y") + facet_wrap(~eval(parse(text=facet_vars()))) + geom_text(aes(label = paste0(round(100*value,0), "%"), y=pie_label_position) )]
+    if (nrow(d_pie())>0)  d_pie()[,ggplot(.SD, aes(x="",y=value,fill=var)) + geom_bar(stat="identity") + coord_polar(theta="y") + facet_wrap(~eval(parse(text= paste0(facet_vars(), collapse=" + " ) ))) + geom_text(aes(label = paste0(round(100*value,0), "%"), y=pie_label_position) )]
   })
   
   output$boxplot = renderPlot({

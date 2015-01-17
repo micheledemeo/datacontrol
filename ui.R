@@ -40,7 +40,7 @@ shinyUI(fluidPage(
                          plotOutput("boxplot") , 
                          dataTableOutput("table_data")), 
                 
-                tabPanel("Profit and loss account - %"),
+                tabPanel("Outliers detection: mean values"),
     
                 tabPanel("% control of costs",plotOutput("pie"),dataTableOutput("pie_data") )
     )
