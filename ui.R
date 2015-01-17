@@ -42,7 +42,9 @@ shinyUI(fluidPage(
                 
                 tabPanel("Outliers detection: mean values"),
     
-                tabPanel("% control of costs",plotOutput("pie"),dataTableOutput("pie_data") )
+                tabPanel("% control of costs",plotOutput("pie"),dataTableOutput("pie_data") ),
+                
+                tabPanel("Free filters on table",dataTableOutput("table_free_filters"))
     )
   )
   

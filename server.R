@@ -2,7 +2,6 @@
 #library(shiny)
 #runApp("C:/Users/mdemeo/Documents/000/datacontrol",port = 12345)
 
-
 source( paste(getwd(), "source/ini_fun.R", sep="/") )
 source( pastedir(getwd() , "source/ini_data.R") )
 
@@ -68,6 +67,7 @@ shinyServer(function(input, output, session) {
     
   })
   
+  
   output$pie = renderPlot({   
     if (nrow(d_pie())>0)  d_pie()[,ggplot(.SD, aes(x="",y=value,fill=var)) + geom_bar(stat="identity") + coord_polar(theta="y") + facet_wrap(~eval(parse(text= paste0(facet_vars(), collapse=" + " ) ))) + geom_text(aes(label = paste0(round(100*value,0), "%"), y=pie_label_position) )]
   })
@@ -78,7 +78,8 @@ shinyServer(function(input, output, session) {
   
   #output$table_data = renderTable({head(d_panel() )})
   output$table_data = renderDataTable({d_panel()})
-  output$pie_data = renderDataTable({d_pie()[,1:(ncol(d_pie() ) -1), with=F ] })#
+  output$pie_data = renderDataTable({d_pie()[,1:(ncol(d_pie() ) -1), with=F ] })
+  output$table_free_filters=renderDataTable({  d[giorni_mare>(input_check_gio()-1) & var %in% input_var()] })
   
   #output$text=renderPrint({ c(facet_vars(),'var') })
   #output$table_data2 = renderDataTable({ d_pie() })
