@@ -1,4 +1,8 @@
-#runapp ####
+#runapp: ####
+#library(shiny)
+#runApp("C:/Users/mdemeo/Documents/000/datacontrol",port = 12345)
+
+
 source( paste(getwd(), "source/ini_fun.R", sep="/") )
 source( pastedir(getwd() , "source/ini_data.R") )
 
@@ -45,7 +49,7 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  facet_vars=reactive({ if (  !is.null( input_strato() )  ) "id_strato" else "codsis199"})  
+  facet_vars=reactive({ if (  !is.null( input_strato() )  ) "id_strato" else c("codsis199")})  
     
   d_pie=reactive({
     
@@ -59,16 +63,16 @@ shinyServer(function(input, output, session) {
   })
   
   output$pie = renderPlot({   
-    d_pie()[,ggplot(.SD, aes(x="",y=value,fill=var)) + geom_bar(stat="identity") + coord_polar(theta="y") + facet_wrap(~eval(parse(text=facet_vars()))) + geom_text(aes(label = paste0(round(100*value,0), "%"), y=pie_label_position) )]
+    if (nrow(d_pie())>0)  d_pie()[,ggplot(.SD, aes(x="",y=value,fill=var)) + geom_bar(stat="identity") + coord_polar(theta="y") + facet_wrap(~eval(parse(text=facet_vars()))) + geom_text(aes(label = paste0(round(100*value,0), "%"), y=pie_label_position) )]
   })
   
-  output$boxplot = renderPlot({   
+  output$boxplot = renderPlot({
     d_panel()[ ,ggplot(.SD, aes(x= var,y=value)) +geom_boxplot(outlier.size=3 ,outlier.colour="red", fill="grey",colour = "blue") + xlab("") ]
   })
   
   #output$table_data = renderTable({head(d_panel() )})
   output$table_data = renderDataTable({d_panel()})
-  output$pie_data = renderDataTable({d_pie()[,pie_label_position:=NULL]})
+  output$pie_data = renderDataTable({d_pie()[,1:(ncol(d_pie() ) -1), with=F ] })#
   
   #output$text=renderPrint({ c(facet_vars(),'var') })
   #output$table_data2 = renderDataTable({ d_pie() })
