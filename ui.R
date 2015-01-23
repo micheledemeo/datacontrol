@@ -28,8 +28,12 @@ shinyUI(fluidPage(
       ,br()
       ,br()
       ,checkboxInput(inputId = "check_gio",label = "Fishing days>0", value=T)
-
-      
+      ,br()
+      ,br()
+      ,br()
+      ,h5("Notes:")
+      ,textOutput("perc_consegne_mensili")
+      ,textOutput("perc_consegne_annuali")
       
     ),
 
@@ -44,7 +48,9 @@ shinyUI(fluidPage(
     
                 tabPanel("% control of costs",plotOutput("pie"),dataTableOutput("pie_data") ),
                 
-                tabPanel("Free filters on table",dataTableOutput("table_free_filters"))
+                tabPanel("Free filters on table",dataTableOutput("table_free_filters")),
+                
+                tabPanel("Delivery status", dataTableOutput("table_consegne"))
     )
   )
   

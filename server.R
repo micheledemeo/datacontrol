@@ -67,6 +67,18 @@ shinyServer(function(input, output, session) {
     
   })
   
+  d_outliers=reactive({
+    
+    d_outliers=d_panel()
+    by_vars=c('codsis199','codlft199','id_strato','var')[ c('codsis199','codlft199','id_strato','var') %in% names(d_panel())]
+    d_outliers2=d_panel()[,list( out_up=quantile(value,.75)+1.5*IQR(value), out_down=quantile(value,.25)-1.5*IQR(value) ),  keyby=.(var)]
+    setkey(d_outliers, var )
+    setkey(d_outliers2, var )
+    
+    d_outliers=d_outliers2[d_outliers][value>out_up | value<out_down][,c('out_up','out_down'):=NULL]
+    d_outliers
+    
+  })
   
   output$pie = renderPlot({   
     if (nrow(d_pie())>0)  d_pie()[,ggplot(.SD, aes(x="",y=value,fill=var)) + geom_bar(stat="identity") + coord_polar(theta="y") + facet_wrap(~eval(parse(text= paste0(facet_vars(), collapse=" + " ) ))) + geom_text(aes(label = paste0(round(100*value,0), "%"), y=pie_label_position) )]
@@ -77,11 +89,13 @@ shinyServer(function(input, output, session) {
   })
   
   #output$table_data = renderTable({head(d_panel() )})
-  output$table_data = renderDataTable({d_panel()})
+  output$table_data = renderDataTable({d_outliers()})
   output$pie_data = renderDataTable({d_pie()[,1:(ncol(d_pie() ) -1), with=F ] })
   output$table_free_filters=renderDataTable({  d[giorni_mare>(input_check_gio()-1) & var %in% input_var()] })
+  output$table_consegne=renderDataTable({bat})
+  output$perc_consegne_annuali=renderText({ perc_consegne_annuali })
+  output$perc_consegne_mensili=renderText({ perc_consegne_mensili })
   
-  #output$text=renderPrint({ c(facet_vars(),'var') })
   #output$table_data2 = renderDataTable({ d_pie() })
   
 })
