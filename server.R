@@ -58,8 +58,8 @@ shinyServer(function(input, output, session) {
     
   d_pie=reactive({
     
-    d_pie=d_panel()[,list(value=as.numeric(sum(value)) ),  keyby=c(facet_vars(),'var')]
-    d_pie2=d_pie[,list(tot=sum(value) ), keyby=c(facet_vars())]      
+    d_pie=d_panel()[,list(value=as.numeric(sum2(value)) ),  keyby=c(facet_vars(),'var')]
+    d_pie2=d_pie[,list(tot=sum2(value) ), keyby=c(facet_vars())]      
     d_pie[d_pie2, value:=round(ifelse(tot==0,0,value/tot),3)]      
     d_pie[,pie_label_position:=cumsum(value), by=c(facet_vars() )]
     d_pie[,pie_label_position:=pie_label_position-.5*value]
@@ -89,7 +89,7 @@ shinyServer(function(input, output, session) {
   })
   
   #output$table_data = renderTable({head(d_panel() )})
-  output$table_data = renderDataTable({d_outliers()})
+  output$table_data = renderDataTable({d_outliers()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,value)]})
   output$pie_data = renderDataTable({d_pie()[,1:(ncol(d_pie() ) -1), with=F ] })
   output$table_free_filters=renderDataTable({  d[giorni_mare>(input_check_gio()-1) & var %in% input_var()] })
   output$table_consegne=renderDataTable({bat})

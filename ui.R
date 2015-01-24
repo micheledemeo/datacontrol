@@ -41,14 +41,17 @@ shinyUI(fluidPage(
   mainPanel(
     tabsetPanel(
                 tabPanel("Outliers detection: abs values",
-                         plotOutput("boxplot") , 
+                         plotOutput("boxplot") ,
+                         h4("Outliers:"),
                          dataTableOutput("table_data")), 
                 
                 tabPanel("Outliers detection: mean values"),
     
                 tabPanel("% control of costs",plotOutput("pie"),dataTableOutput("pie_data") ),
                 
-                tabPanel("Free filters on table",dataTableOutput("table_free_filters")),
+                tabPanel("Free filters on the data",dataTableOutput("table_free_filters")),
+                
+                tabPanel("From sample to population"),
                 
                 tabPanel("Delivery status", dataTableOutput("table_consegne"))
     )

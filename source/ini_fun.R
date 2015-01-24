@@ -4,6 +4,8 @@ require(data.table)
 require(reshape2)
 require(ggplot2)
 
+sum2=function(...,na.rm=T) sum(...,na.rm=na.rm)
+
 # startup functions ####
 fread_mysql = function( tbname, dbname="nisea" , user="nisea", psw="n1s34", csvname=strftime(Sys.time(),"%Y%m%d%H%M%S"), tempdir=getwd() ,mysqldir="C:/wamp/bin/mysql/mysql5.6.17/bin" ) {
   
