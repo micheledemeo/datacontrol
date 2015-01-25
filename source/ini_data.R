@@ -5,9 +5,21 @@ bat=fread_mysql(tbname = 'battelli_rilevatori')
 bat=bat[ anno==2014, list(id_battello ,id_rilevatore)]
 setkey(bat, id_battello)
 
+# tabella degli id: battello,strato,rilevatore. 
+ids=fread_mysql(tbname = 'battelli')
+ids=ids[,.(id_battello=id,id_strato)]
+setkey(ids, id_battello)
+ids=ids[bat]
+ids[is.na(id_strato) , id_strato:=0L]
+
 # dataset mensili #####
 d_mensili=fread_mysql(tbname = 'schede_mensili')
 d_mensili=d_mensili[anno==2014]
+d_mensili[,id_strato:=NULL]
+setkey(d_mensili, id_battello)
+d_mensili=ids[d_mensili]
+d_mensili[is.na(id_strato) , id_strato:=0L]
+
 consegne_mensili=d_mensili[,list(m=.N),.(id_battello,mensilita)][mensilita==12,m:=12][,mensilita:=NULL]
 setkey(consegne_mensili, id_battello)
 bat=consegne_mensili[bat][is.na(m),m:=0]
@@ -32,6 +44,10 @@ d_mensili[is.na(value), value:=0]
 # dataset annuali #####
 d_annuali=fread_mysql(tbname = 'schede_annuali')
 d_annuali=d_annuali[anno==2014]
+d_annuali[,id_strato:=NULL]
+setkey(d_annuali, id_battello)
+d_annuali=ids[d_annuali]
+d_annuali[is.na(id_strato) , id_strato:=0L]
 
 consegne_annuali=d_annuali[,list(a=1),keyby=id_battello]
 bat=consegne_annuali[bat][is.na(a),a:=0]
