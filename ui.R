@@ -41,11 +41,14 @@ shinyUI(fluidPage(
   mainPanel(
     tabsetPanel(
                 tabPanel("Outliers detection: abs values",
-                         plotOutput("boxplot") ,
+                         plotOutput("boxplot_value") ,
                          h4("Outliers:"),
-                         dataTableOutput("table_data")), 
+                         dataTableOutput("table_outliers_value")), 
                 
-                tabPanel("Outliers detection: mean values"),
+                tabPanel("Outliers detection: mean values",
+                         plotOutput("boxplot_parameter"),
+                         h4("Outliers:"),
+                         dataTableOutput("table_outliers_parameter")),
     
                 tabPanel("% control of costs",plotOutput("pie"),dataTableOutput("pie_data") ),
                 
