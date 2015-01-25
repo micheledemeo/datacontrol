@@ -52,6 +52,8 @@ shinyUI(fluidPage(
     
                 tabPanel("% control of costs",plotOutput("pie"),dataTableOutput("pie_data") ),
                 
+                tabPanel("Costs and profit"),
+                
                 tabPanel("Free filters on the data",dataTableOutput("table_free_filters")),
                 
                 tabPanel("From sample to population"),
