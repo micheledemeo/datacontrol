@@ -76,12 +76,14 @@ shinyServer(function(input, output, session) {
     
   d_pie=reactive({
     
-    d_pie=d_panel()[,list(value=as.numeric(sum2(value)) ),  keyby=c(facet_vars(),'var')]
+    d_pie=d_panel()[var %in% c("alcova","carbur","lavoro","spcom","spmanu","alcofi" )]
+    d_pie=d_pie[,list(value=as.numeric(sum2(value)) ),  keyby=c(facet_vars(),'var')]
     d_pie2=d_pie[,list(tot=sum2(value) ), keyby=c(facet_vars())]      
     d_pie[d_pie2, value:=round(ifelse(tot==0,0,value/tot),3)]      
     d_pie[,pie_label_position:=cumsum(value), by=c(facet_vars() )]
     d_pie[,pie_label_position:=pie_label_position-.5*value]
     d_pie
+   
     
   })
   
