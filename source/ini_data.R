@@ -21,7 +21,10 @@ d_mensili=ids[d_mensili]
 d_mensili[is.na(id_strato) , id_strato:=0L]
 
 consegne_mensili=d_mensili[,list(m=.N),.(id_battello,mensilita)][mensilita==12,m:=12][,mensilita:=NULL]
-setkey(consegne_mensili, id_battello)
+setkey(consegne_mensili, id_battello,m)
+#se vi sono (erroneamente) schede con mensilita uguale 1 e 12, lascio mensilita 12:
+consegne_mensili=consegne_mensili[.(unique(id_battello)),mult="last"]
+consegne_mensili=consegne_mensili[.(id_battello),mult="last"]
 bat=consegne_mensili[bat][is.na(m),m:=0]
 rm(consegne_mensili)
 
