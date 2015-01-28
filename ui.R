@@ -1,5 +1,5 @@
 wd=getwd()
-shinyUI(fluidPage(
+shinyUI(fluidPage( theme = shinytheme("flatly"),
   
   #titlePanel("Nicoda Project"),
   br(),
@@ -50,7 +50,7 @@ shinyUI(fluidPage(
                          h4("Outliers:"),
                          dataTableOutput("table_outliers_parameter")),
     
-                tabPanel("% control of costs",plotOutput("pie"),dataTableOutput("pie_data") ),
+                tabPanel("Control of % costs",plotOutput("pie"),dataTableOutput("pie_data") ),
                 
                 tabPanel("Costs and profit"),
                 
