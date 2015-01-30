@@ -3,7 +3,7 @@ require(shiny)
 require(data.table)
 require(reshape2)
 require(ggplot2)
-require(shinythemes)
+
 
 sum2=function(...,na.rm=T) sum(...,na.rm=na.rm)
 

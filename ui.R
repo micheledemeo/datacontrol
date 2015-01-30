@@ -1,3 +1,4 @@
+require(shinythemes)
 wd=getwd()
 shinyUI(fluidPage( theme = shinytheme("flatly"),
   
@@ -52,7 +53,16 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
     
                 tabPanel("Control of % costs",plotOutput("pie"),dataTableOutput("pie_data") ),
                 
-                tabPanel("Costs and profit"),
+                tabPanel("Waterfall: costs and profit",
+                           tabsetPanel(
+                             tabPanel("Italy", plotOutput("waterfall_plot_italy")),
+                             tabPanel("Grouped by strata", plotOutput("waterfall_plot_strata",height = 800)),
+                             tabPanel("Grouped by gear * LOA", plotOutput("waterfall_plot_gear_loa",height = 800)),
+                             tabPanel("Grouped by gear", plotOutput("waterfall_plot_gear",height = 800)),
+                             tabPanel("Grouped by LOA", plotOutput("waterfall_plot_loa",height = 800))
+                           )
+                         ),
+                         
                 
                 tabPanel("Free filters on the data",dataTableOutput("table_free_filters")),
                 

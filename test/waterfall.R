@@ -19,7 +19,7 @@ setkey(waterfall, id_strato,o)
 waterfall[,end:=cumsum(value), keyby=.(id_strato)]
 waterfall[,start:=end-value, keyby=.(id_strato)]
 
-waterfall[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(value,big.mark = "."))) +facet_wrap(~id_strato,scales = "free") +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())   ]
+waterfall[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(value,big.mark = "."))) +facet_wrap(~id_strato,scales = "free") +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") ]
 
 
 

@@ -1,8 +1,12 @@
-#runapp: ####
-#library(shiny)
-#runApp("C:/Users/mdemeo/Documents/000/datacontrol",port = 12345)
+# runapp: ####
+# library(shiny)
+# runApp("C:/Users/mdemeo/Documents/000/datacontrol",port = 12345)
+# options(shiny.trace=T)
 
+
+# defining function ####
 source( paste(getwd(), "source/ini_fun.R", sep="/") )
+# data import from mysql ####
 source( pastedir(getwd() , "source/ini_data.R") )
 
 var=d[,unique(var)]
@@ -113,6 +117,9 @@ shinyServer(function(input, output, session) {
     
   })
   
+  # definisci i waterfall data.table ####
+  source( paste(getwd(), "source/waterfall.R", sep="/"),loc=T )
+  
   output$pie = renderPlot({   
     if (nrow(d_pie())>0)  d_pie()[,ggplot(.SD, aes(x="",y=value,fill=var)) + geom_bar(stat="identity") + coord_polar(theta="y") + facet_wrap(~eval(parse(text= paste0(facet_vars(), collapse=" + " ) ))) + geom_text(aes(label = paste0(round(100*value,0), "%"), y=pie_label_position) )]
   })
@@ -123,6 +130,25 @@ shinyServer(function(input, output, session) {
   
   output$boxplot_parameter = renderPlot({
     d_panel()[ ,ggplot(.SD, aes(x= var,y=parameter)) +geom_boxplot(outlier.size=3 ,outlier.colour="red", fill="grey",colour = "blue") + xlab("") ]
+  })
+  
+  output$waterfall_plot_italy = renderPlot({
+    d_waterfall_italy()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(value,big.mark = "."))) + theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") ]
+  })
+  
+  output$waterfall_plot_strata = renderPlot({
+    d_waterfall_strata()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(value,big.mark = "."))) +facet_wrap(~id_strato,scales = "free",ncol = 2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") ]
+  })
+  
+  output$waterfall_plot_gear_loa = renderPlot({
+    d_waterfall_gear_loa()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(value,big.mark = "."))) +facet_wrap(~ codsis199+codlft199, scales = "free",ncol = 2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") ]
+  })
+  
+  output$waterfall_plot_gear = renderPlot({
+    d_waterfall_gear()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(value,big.mark = "."))) +facet_wrap(~codsis199,scales = "free",ncol = 2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") ]
+  })
+  output$waterfall_plot_loa = renderPlot({
+    d_waterfall_loa()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(value,big.mark = "."))) +facet_wrap(~codlft199,scales = "free", ncol=2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") ]
   })
   
   #output$table_data = renderTable({head(d_panel() )})
