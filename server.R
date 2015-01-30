@@ -4,17 +4,26 @@
 # options(shiny.trace=T)
 
 
-# defining function ####
-source( paste(getwd(), "source/ini_fun.R", sep="/") )
-# data import from mysql ####
-source( pastedir(getwd() , "source/ini_data.R") )
-
-var=d[,unique(var)]
-strato=d[,unique(id_strato)]
-codsis=d[,unique(codsis199)]
-codlft=d[,unique(codlft199)]
-
 shinyServer(function(input, output, session) {
+    
+  # defining function ####
+  source( paste(getwd(), "source/ini_fun.R", sep="/"),loc=T )
+  
+  # data import from mysql with a fake progress bar ####
+  withProgress(message = "Start loading data from MySql",value = 0, 
+    { 
+     source( pastedir(getwd() , "source/ini_data.R"), loc=T )
+     n=20               
+     for (i in 1:n) {
+       incProgress(1/n, message ="Loading last records:", detail =  d[sample(1:nrow(d),1),id_battello] ) 
+       Sys.sleep(.1)
+      }
+    })
+  
+  var=d[,unique(var)]
+  strato=d[,unique(id_strato)]
+  codsis=d[,unique(codsis199)]
+  codlft=d[,unique(codlft199)]
   
   input_var=reactive({ input$var  })
   input_codsis=reactive({ input$codsis  })
@@ -68,7 +77,8 @@ shinyServer(function(input, output, session) {
     rm(ricavi)
     
     d_panel
-  }) 
+  })
+  
   
   # considering updateSelectInput, the last else in facet will never be true
   facet_vars=reactive({ if (  !is.null( input_strato() ) & ( is.null(input_codsis()) | is.null(input_codlft())) ) "id_strato" 
