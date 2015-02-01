@@ -10,14 +10,15 @@ shinyServer(function(input, output, session) {
   source( paste(getwd(), "source/ini_fun.R", sep="/"),loc=T )
   
   # data import from mysql with a fake progress bar ####
-  withProgress(message = "Start loading data from MySql",value = 0, 
+  withProgress(message = "Loading data from MySql",
     { 
+     n=20
      source( pastedir(getwd() , "source/ini_data.R"), loc=T )
-     n=20               
+     
      for (i in 1:n) {
-       incProgress(1/n, message ="Loading last records:", detail =  d[sample(1:nrow(d),1),id_battello] ) 
+       incProgress(1/n, detail =  d[sample(1:nrow(d),1),id_battello] ) 
        Sys.sleep(.1)
-      }
+     }
     })
   
   var=d[,unique(var)]

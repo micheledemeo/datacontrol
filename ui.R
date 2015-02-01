@@ -14,7 +14,8 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
     
       sidebarPanel(
       
-      uiOutput("var")
+      
+      conditionalPanel(condition="input.headtab != 4", uiOutput("var"))
       ,br()
       ,br()
       ,br()
@@ -35,27 +36,26 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
       ,h5("Notes:")
       ,textOutput("perc_consegne_mensili")
       ,textOutput("perc_consegne_annuali")
-      
     ),
 
     
   mainPanel(
-    tabsetPanel(
-                tabPanel("Outliers detection: abs values",
+    tabsetPanel(id = "headtab",
+                tabPanel("Outliers detection: abs values",value = 1,
                          plotOutput("boxplot_value") ,
                          h4("Outliers:"),
                          dataTableOutput("table_outliers_value")), 
                 
-                tabPanel("Outliers detection: mean values",
+                tabPanel("Outliers detection: mean values", value = 2,
                          plotOutput("boxplot_parameter"),
                          h4("Outliers:"),
                          dataTableOutput("table_outliers_parameter")),
     
-                tabPanel("Control of % costs",plotOutput("pie"),dataTableOutput("pie_data") ),
+                tabPanel("Control of % costs",value = 3,plotOutput("pie"),dataTableOutput("pie_data") ),
                 
-                tabPanel("Waterfall: costs and profit",
+                tabPanel("Waterfall: costs and profit", value = 4,
                            tabsetPanel(
-                             tabPanel("Italy", plotOutput("waterfall_plot_italy")),
+                             tabPanel("All", plotOutput("waterfall_plot_italy")),
                              tabPanel("Grouped by strata", plotOutput("waterfall_plot_strata",height = 800)),
                              tabPanel("Grouped by gear * LOA", plotOutput("waterfall_plot_gear_loa",height = 800)),
                              tabPanel("Grouped by gear", plotOutput("waterfall_plot_gear",height = 800)),
@@ -64,11 +64,11 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                          ),
                          
                 
-                tabPanel("Free filters on the data",dataTableOutput("table_free_filters")),
+                tabPanel("Free filters on the data",value = 5,dataTableOutput("table_free_filters")),
                 
-                tabPanel("From sample to population"),
+                tabPanel("From sample to population",value = 6),
                 
-                tabPanel("Delivery status", dataTableOutput("table_consegne"))
+                tabPanel("Delivery status", value = 7, dataTableOutput("table_consegne"))
     )
   )
   
