@@ -14,28 +14,25 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
     
       sidebarPanel(
       
-      
-      conditionalPanel(condition="input.headtab != 4", uiOutput("var"))
-      ,br()
-      ,br()
-      ,br()
-      ,uiOutput("codsis")
-      ,uiOutput("codlft")
-      ,actionButton("reset", "Reset")
-      ,br()
-      ,br()
-      ,br()
-      ,uiOutput("strato")
-      ,br()
-      ,br()
-      ,br()
-      ,checkboxInput(inputId = "check_gio",label = "Fishing days>0", value=T)
-      ,br()
-      ,br()
-      ,br()
-      ,h5("Notes:")
-      ,textOutput("perc_consegne_mensili")
-      ,textOutput("perc_consegne_annuali")
+      actionButton("refresh", "Refresh data from remote server") ,br(), br(),
+      conditionalPanel(condition="input.headtab == 1 || input.headtab == 2", uiOutput("var"), br(), br() ),
+      conditionalPanel(condition="input.headtab >= 1 && input.headtab <= 4 || input.headtab == 6",
+                      uiOutput("codsis"),
+                      uiOutput("codlft"),
+                      actionButton("reset", "Reset filters"),
+                      br(),
+                      br(),
+                      br(),
+                      uiOutput("strato"),
+                      br(),
+                      br()
+      ),
+      conditionalPanel(condition="input.headtab != 7", 
+                       checkboxInput(inputId = "check_gio",label = "Fishing days>0", value=T), br(),br() 
+      ),
+      h5("Notes:"),
+      textOutput("perc_consegne_mensili"),
+      textOutput("perc_consegne_annuali")
     ),
 
     

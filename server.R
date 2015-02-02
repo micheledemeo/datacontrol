@@ -10,29 +10,11 @@ shinyServer(function(input, output, session) {
   source( paste(getwd(), "source/ini_fun.R", sep="/"),loc=T )
   
   # data import from mysql with a fake progress bar ####
-  withProgress(message = "Loading data from MySql",
-    { 
-     n=20
-     source( pastedir(getwd() , "source/ini_data.R"), loc=T )
-     
-     for (i in 1:n) {
-       incProgress(1/n, detail =  d[sample(1:nrow(d),1),id_battello] ) 
-       Sys.sleep(.1)
-     }
-    })
+  source( paste(getwd(), "source/refresh_data.R", sep="/"),loc=T )  
   
-  var=d[,unique(var)]
-  strato=d[,unique(id_strato)]
-  codsis=d[,unique(codsis199)]
-  codlft=d[,unique(codlft199)]
+  # refresh data with an action button
+  observe({ if (input$refresh > 0) source( paste(getwd(), "source/refresh_data.R", sep="/"),loc=T )  })
   
-  input_var=reactive({ input$var  })
-  input_codsis=reactive({ input$codsis  })
-  input_codlft=reactive({ input$codlft  })
-  input_strato=reactive({ input$strato  })
-  input_check_gio=reactive({ input$check_gio  })
-  
-  #output$var=renderUI({  checkboxGroupInput("var", label = "Choose a variable to analyze", choices =var , selected=var) })
   output$var=renderUI({  selectInput("var", label = "Select the variables:", choices =var, selected = var, multiple = T ) })  
   output$codsis=renderUI({selectInput("codsis", label = "Apply a filter on gear type:", choices =codsis, selected = codsis, multiple = T ) })
   output$codlft=renderUI({ selectInput("codlft", label = "Apply a filter on LOA:", choices =codlft, selected = codlft, multiple = T ) })
