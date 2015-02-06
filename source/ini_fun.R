@@ -37,3 +37,5 @@ fread_mysql = function( tbname, dbname="nisea" , user="nisea", psw="n1s34", csvn
 }
 
 pastedir=function(...) paste(..., sep="/")
+
+source("C:/Program Files/R/R-3.1.1/_nisea/hvServer.R")

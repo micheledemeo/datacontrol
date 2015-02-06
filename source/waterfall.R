@@ -2,7 +2,7 @@
 # waterfall italy ####
 d_waterfall_italy=reactive({
   
-  if( nrow(d_panel())>0 ){
+  if( ok_rows() ){
     
     waterfall=CJ(var=c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor'),value=as.numeric(0))
     setkey(waterfall, var)
@@ -31,7 +31,7 @@ d_waterfall_italy=reactive({
 # waterfall per strato ####
 d_waterfall_strata=reactive({
   
-  if( nrow(d_panel())>0 ){
+  if( ok_rows() ){
     
     waterfall=CJ(var=c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor'), id_strato=d_panel()[,unique(id_strato)],value=as.numeric(0) )
     setkey(waterfall, id_strato, var)
@@ -60,7 +60,7 @@ d_waterfall_strata=reactive({
 # waterfall per loa ####
 d_waterfall_loa=reactive({
   
-  if( nrow(d_panel())>0 ){
+  if( ok_rows() ){
     
     waterfall=CJ(var=c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor'), codlft199=d_panel()[,unique(codlft199)],value=as.numeric(0) )
     setkey(waterfall, codlft199, var)
@@ -89,7 +89,7 @@ d_waterfall_loa=reactive({
 # waterfall per gear ####
 d_waterfall_gear=reactive({
   
-  if( nrow(d_panel())>0 ){
+  if( ok_rows() ){
     
     waterfall=CJ(var=c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor'), codsis199=d_panel()[,unique(codsis199)],value=as.numeric(0) )
     setkey(waterfall, codsis199, var)
@@ -118,7 +118,7 @@ d_waterfall_gear=reactive({
 # waterfall per gear,loa ####
 d_waterfall_gear_loa=reactive({
   
-  if( nrow(d_panel())>0 ){
+  if( ok_rows() ){
     
     waterfall=CJ(var=c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor'), codsis199=d_panel()[,unique(codsis199)],codlft199=d_panel()[,unique(codlft199)],value=as.numeric(0) )
     setkey(waterfall, codsis199,codlft199, var)

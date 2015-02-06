@@ -21,6 +21,8 @@ shinyServer(function(input, output, session) {
   
   output$strato=renderUI({ selectInput("strato", label = "Select the strata:", choices =strato, selected = NULL, multiple = T ) })
   
+  output$nr_strato=renderUI({ selectInput("nr_strato", label = "Select the strata:", choices =strato, selected = NULL, multiple = T ) })
+  
   observe({ if (!is.null(input_codsis()) | !is.null(input_codlft())  ) updateSelectInput(session, "strato", choices =strato, selected = NULL) })
   observe({ 
     if (!is.null(input_strato()) ) {
@@ -39,11 +41,11 @@ shinyServer(function(input, output, session) {
   # considering updateSelectInput, the last else in d_panel will never be true
   d_panel=reactive({ 
     
-    d_panel=if (  !is.null( input_strato() ) ) d[giorni_mare>(input_check_gio()-1) & var %in% input_var() & id_strato %in% input_strato() ]
-            else if ( !is.null(input_codsis()) &  is.null(input_codlft()) )  d[giorni_mare>(input_check_gio()-1) & var %in% input_var() & codsis199 %in% input_codsis()]
-            else if ( is.null(input_codsis()) &  !is.null(input_codlft()) )  d[giorni_mare>(input_check_gio()-1) & var %in% input_var() & codlft199 %in% input_codlft()]
-            else if ( !is.null(input_codsis()) &  !is.null(input_codlft()) ) d[giorni_mare>(input_check_gio()-1) & var %in% input_var() & codsis199 %in% input_codsis() & codlft199 %in% input_codlft()]  
-            else d[0]
+    d_panel=if (  !is.null( input_strato() ) ) all[giorni_mare>(input_check_gio()-1) & var %in% input_var() & id_strato %in% input_strato() ]
+            else if ( !is.null(input_codsis()) &  is.null(input_codlft()) )  all[giorni_mare>(input_check_gio()-1) & var %in% input_var() & codsis199 %in% input_codsis()]
+            else if ( is.null(input_codsis()) &  !is.null(input_codlft()) )  all[giorni_mare>(input_check_gio()-1) & var %in% input_var() & codlft199 %in% input_codlft()]
+            else if ( !is.null(input_codsis()) &  !is.null(input_codlft()) ) all[giorni_mare>(input_check_gio()-1) & var %in% input_var() & codsis199 %in% input_codsis() & codlft199 %in% input_codlft()]  
+            else all[0]
     
     d_panel[,parameter:=as.numeric(0) ]
     d_panel[var %in% c('spmanu','alcofi','amm','indeb','invest'),parameter:=round(as.numeric(value)) ]
@@ -61,6 +63,8 @@ shinyServer(function(input, output, session) {
     
     d_panel
   })
+  
+  ok_rows=reactive({nrow(d_panel())>0})
   
   
   # considering updateSelectInput, the last else in facet will never be true
@@ -130,11 +134,45 @@ shinyServer(function(input, output, session) {
   })
   
   output$waterfall_plot_strata = renderPlot({
-    d_waterfall_strata()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(value,big.mark = "."))) +facet_wrap(~id_strato,scales = "free",ncol = 2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") ]
-  })
+    
+    if(ok_rows()) {
+      str_in_panel=d_waterfall_strata()[,unique(id_strato)]
+      
+      if (length(str_in_panel)<14 )  {
+        
+        d_waterfall_strata()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(value,big.mark = "."))) +facet_wrap(~id_strato, ncol=2,scales = "free") +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") ]
+        
+      } else {
+        
+        d_waterfall_strata()[ id_strato %in% str_in_panel[1:14] ,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(value,big.mark = "."))) +facet_wrap(~id_strato, ncol=2,scales = "free") +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") ]
+        
+      }  
+      
+    }
+    
+    })      
   
   output$waterfall_plot_gear_loa = renderPlot({
-    d_waterfall_gear_loa()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(value,big.mark = "."))) +facet_wrap(~ codsis199+codlft199, scales = "free",ncol = 2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") ]
+    
+    if(ok_rows()) {
+      
+      sis_lft_in_panel=d_waterfall_gear_loa()[,.N,list(codsis199,codlft199)]
+      
+      if ( nrow(sis_lft_in_panel)<14 )  {
+        d_waterfall_gear_loa()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(value,big.mark = "."))) +facet_wrap(~ codsis199+codlft199, scales = "free",ncol = 2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") ]
+        
+      } else {
+        
+        u_sis = sis_lft_in_panel[1:14, unique(codsis199)]
+        u_lft = sis_lft_in_panel[1:14, unique(codlft199)]
+        
+        d_waterfall_gear_loa()[ codsis199 %in% u_sis & codlft199 %in% u_lft,
+                                ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(value,big.mark = "."))) +facet_wrap(~ codsis199+codlft199, scales = "free",ncol = 2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") ]
+        
+      }     
+      
+    }
+  
   })
   
   output$waterfall_plot_gear = renderPlot({
@@ -148,8 +186,8 @@ shinyServer(function(input, output, session) {
   output$table_outliers_value = renderDataTable({d_outliers_value()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,value,parameter)]})
   output$table_outliers_parameter = renderDataTable({d_outliers_parameter()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,parameter,value)]})
   output$pie_data = renderDataTable({d_pie()[,1:(ncol(d_pie() ) -1), with=F ] })
-  output$table_free_filters=renderDataTable({  d[giorni_mare>(input_check_gio()-1) & var %in% input_var()] })
-  output$table_consegne=renderDataTable({bat})
+  output$table_free_filters=renderDataTable({  all[giorni_mare>(input_check_gio()-1) & var %in% input_var()] })
+  output$table_consegne=renderDataTable({bat_ril})
   output$perc_consegne_annuali=renderText({ perc_consegne_annuali })
   output$perc_consegne_mensili=renderText({ perc_consegne_mensili })
   

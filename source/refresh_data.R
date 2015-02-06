@@ -17,15 +17,15 @@ withProgress(message = "Loading data from local MySql:",
   source( pastedir(getwd() , "source/ini_data.R"), loc=T )
   
   for (i in 1:n) {
-    incProgress(1/n, detail =  d[sample(1:nrow(d),1),id_battello] ) 
+    incProgress(1/n, detail =  all[sample(1:nrow(all),1),id_battello] ) 
     Sys.sleep(.1)
   }
 })
 
-var=d[,unique(var)]
-strato=d[,unique(id_strato)]
-codsis=d[,unique(codsis199)]
-codlft=d[,unique(codlft199)]
+var=all[,unique(var)]
+strato=all[,unique(id_strato)]
+codsis=all[,unique(codsis199)]
+codlft=all[,unique(codlft199)]
 
 input_var=reactive({ input$var  })
 input_codsis=reactive({ input$codsis  })
