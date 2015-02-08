@@ -41,32 +41,18 @@ shinyServer(function(input, output, session) {
   # considering updateSelectInput, the last else in d_panel will never be true
   d_panel=reactive({ 
     
-    d_panel=if (  !is.null( input_strato() ) ) all[giorni_mare>(input_check_gio()-1) & var %in% input_var() & id_strato %in% input_strato() ]
-            else if ( !is.null(input_codsis()) &  is.null(input_codlft()) )  all[giorni_mare>(input_check_gio()-1) & var %in% input_var() & codsis199 %in% input_codsis()]
-            else if ( is.null(input_codsis()) &  !is.null(input_codlft()) )  all[giorni_mare>(input_check_gio()-1) & var %in% input_var() & codlft199 %in% input_codlft()]
-            else if ( !is.null(input_codsis()) &  !is.null(input_codlft()) ) all[giorni_mare>(input_check_gio()-1) & var %in% input_var() & codsis199 %in% input_codsis() & codlft199 %in% input_codlft()]  
-            else all[0]
+    d_panel=if (  !is.null( input_strato() ) ) all[giorni_mare>(input_check_gio()-1) & id_strato %in% input_strato() ]
+              else if ( !is.null(input_codsis()) &  is.null(input_codlft()) )  all[giorni_mare>(input_check_gio()-1)  & codsis199 %in% input_codsis()]
+              else if ( is.null(input_codsis()) &  !is.null(input_codlft()) )  all[giorni_mare>(input_check_gio()-1)  & codlft199 %in% input_codlft()]
+              else if ( !is.null(input_codsis()) &  !is.null(input_codlft()) ) all[giorni_mare>(input_check_gio()-1)  & codsis199 %in% input_codsis() & codlft199 %in% input_codlft()]  
+              else all[0]
     
-    d_panel[,parameter:=as.numeric(0) ]
-    d_panel[var %in% c('spmanu','alcofi','amm','indeb','invest'),parameter:=round(as.numeric(value)) ]
-    d_panel[var %in% c('alcova','carbur','ricavi','ricavi_est') &  giorni_mare>0, parameter:=round(value/giorni_mare) ]
-    d_panel[var=='lavoro' &  giorni_mare>0, parameter:=round(value/equipaggio_medio) ]
+    if (input$headtab <=2) d_panel[ var %in% input_var() ] else d_panel
     
-    ricavi=d_panel[var=='ricavi' & value>0, .(id_battello,ricavi=value)]
-    setkey(d_panel, id_battello)
-    setkey(ricavi, id_battello)
-    d_panel=ricavi[d_panel]
-    
-    d_panel[var=='spcom' & ricavi>0 ,  parameter:=round(value/ricavi,3)  ]
-    d_panel[,ricavi:=NULL]
-    rm(ricavi)
-    
-    d_panel
   })
   
   ok_rows=reactive({nrow(d_panel())>0})
-  
-  
+    
   # considering updateSelectInput, the last else in facet will never be true
   facet_vars=reactive({ if (  !is.null( input_strato() ) & ( is.null(input_codsis()) | is.null(input_codlft())) ) "id_strato" 
                         else if ( !is.null(input_codsis()) &  is.null(input_codlft()) ) "codsis199"
@@ -77,7 +63,12 @@ shinyServer(function(input, output, session) {
     
   d_pie=reactive({
     
-    d_pie=d_panel()[var %in% c("alcova","carbur","lavoro","spcom","spmanu","alcofi" )]
+    d_pie = 
+      if(input_apply_weights()==TRUE) 
+        d_panel()[var %in% c("alcova","carbur","lavoro","spcom","spmanu","alcofi" ) , list(id_strato,codsis199,codlft199,var,value=value/pr_i) ]
+      else  
+        d_panel()[var %in% c("alcova","carbur","lavoro","spcom","spmanu","alcofi" ) , list(id_strato,codsis199,codlft199,var,value) ]
+    
     d_pie=d_pie[,list(value=as.numeric(sum2(value)) ),  keyby=c(facet_vars(),'var')]
     d_pie2=d_pie[,list(tot=sum2(value) ), keyby=c(facet_vars())]      
     d_pie[d_pie2, value:=round(ifelse(tot==0,0,value/tot),3)]      
@@ -191,6 +182,6 @@ shinyServer(function(input, output, session) {
   output$perc_consegne_annuali=renderText({ perc_consegne_annuali })
   output$perc_consegne_mensili=renderText({ perc_consegne_mensili })
   
-  #output$table_data2 = renderDataTable({ d_pie() })
+  #output$uti = renderDataTable({ d_waterfall_italy() })
   
 })

@@ -4,13 +4,20 @@ d_waterfall_italy=reactive({
   
   if( ok_rows() ){
     
+    d_wat = 
+      if(input_apply_weights()==TRUE) 
+        d_panel()[var %in% c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro') , list(var,value=as.numeric(value/pr_i) ) ]
+    else  
+      d_panel()[var %in% c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro') , list(id_strato,var,value=as.numeric(value)) ]
+    
     waterfall=CJ(var=c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor'),value=as.numeric(0))
     setkey(waterfall, var)
     
-    waterfall_cost=d_panel()[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum( value)) ), by=.(var) ]
+    waterfall_cost=d_wat[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=sum( value) ), by=.(var) ]
     setkey(waterfall_cost, var)
     
-    waterfall_proflor=d_panel()[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum(  ifelse(var=='ricavi',value,-value)  )), var='proflor') ][,list(var,value)]
+    waterfall_proflor=d_wat[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum(  ifelse(var=='ricavi',value,-value)  )), var='proflor') ][,list(var,value)]
+    rm(d_wat)
     setkey(waterfall_proflor, var)
     
     waterfall[waterfall_cost,value:=i.value]
@@ -33,13 +40,20 @@ d_waterfall_strata=reactive({
   
   if( ok_rows() ){
     
+    d_wat = 
+      if(input_apply_weights()==TRUE) 
+        d_panel()[var %in% c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro') , list(id_strato,var,value=value/pr_i) ]
+    else  
+      d_panel()[var %in% c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro') , list(id_strato,var,value) ]
+    
     waterfall=CJ(var=c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor'), id_strato=d_panel()[,unique(id_strato)],value=as.numeric(0) )
     setkey(waterfall, id_strato, var)
     
-    waterfall_cost=d_panel()[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum( value)) ), by=.(id_strato,var) ]
+    waterfall_cost=d_wat[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum( value)) ), by=.(id_strato,var) ]
     setkey(waterfall_cost, id_strato, var)
     
-    waterfall_proflor=d_panel()[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum(  ifelse(var=='ricavi',value,-value)  )), var='proflor'), keyby=.(id_strato) ][,list(id_strato,var,value)]
+    waterfall_proflor=d_wat[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum(  ifelse(var=='ricavi',value,-value)  )), var='proflor'), keyby=.(id_strato) ][,list(id_strato,var,value)]
+    rm(d_wat)
     setkey(waterfall_proflor, id_strato, var)
     
     waterfall[waterfall_cost,value:=i.value]
@@ -62,13 +76,20 @@ d_waterfall_loa=reactive({
   
   if( ok_rows() ){
     
+    d_wat = 
+      if(input_apply_weights()==TRUE) 
+        d_panel()[var %in% c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro') , list(codlft199,var,value=value/pr_i) ]
+    else  
+      d_panel()[var %in% c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro') , list(codlft199,var,value) ]
+    
     waterfall=CJ(var=c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor'), codlft199=d_panel()[,unique(codlft199)],value=as.numeric(0) )
     setkey(waterfall, codlft199, var)
     
-    waterfall_cost=d_panel()[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum( value)) ), by=.(codlft199,var) ]
+    waterfall_cost=d_wat[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum( value)) ), by=.(codlft199,var) ]
     setkey(waterfall_cost, codlft199, var)
     
-    waterfall_proflor=d_panel()[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum(  ifelse(var=='ricavi',value,-value)  )), var='proflor'), keyby=.(codlft199) ][,list(codlft199,var,value)]
+    waterfall_proflor=d_wat[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum(  ifelse(var=='ricavi',value,-value)  )), var='proflor'), keyby=.(codlft199) ][,list(codlft199,var,value)]
+    rm(d_wat)
     setkey(waterfall_proflor, codlft199, var)
     
     waterfall[waterfall_cost,value:=i.value]
@@ -91,13 +112,20 @@ d_waterfall_gear=reactive({
   
   if( ok_rows() ){
     
+    d_wat = 
+      if(input_apply_weights()==TRUE) 
+        d_panel()[var %in% c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro') , list(codsis199,var,value=value/pr_i) ]
+    else  
+      d_panel()[var %in% c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro') , list(codsis199,var,value) ]
+    
     waterfall=CJ(var=c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor'), codsis199=d_panel()[,unique(codsis199)],value=as.numeric(0) )
     setkey(waterfall, codsis199, var)
     
-    waterfall_cost=d_panel()[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum( value)) ), by=.(codsis199,var) ]
+    waterfall_cost=d_wat[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum( value)) ), by=.(codsis199,var) ]
     setkey(waterfall_cost, codsis199, var)
     
-    waterfall_proflor=d_panel()[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum(  ifelse(var=='ricavi',value,-value)  )), var='proflor'), keyby=.(codsis199) ][,list(codsis199,var,value)]
+    waterfall_proflor=d_wat[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum(  ifelse(var=='ricavi',value,-value)  )), var='proflor'), keyby=.(codsis199) ][,list(codsis199,var,value)]
+    rm(d_wat)
     setkey(waterfall_proflor, codsis199, var)
     
     waterfall[waterfall_cost,value:=i.value]
@@ -120,13 +148,20 @@ d_waterfall_gear_loa=reactive({
   
   if( ok_rows() ){
     
+    d_wat = 
+      if(input_apply_weights()==TRUE) 
+        d_panel()[var %in% c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro') , list(codsis199,codlft199,var,value=value/pr_i) ]
+    else  
+      d_panel()[var %in% c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro') , list(codsis199,codlft199,var,value) ]
+    
     waterfall=CJ(var=c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor'), codsis199=d_panel()[,unique(codsis199)],codlft199=d_panel()[,unique(codlft199)],value=as.numeric(0) )
     setkey(waterfall, codsis199,codlft199, var)
     
-    waterfall_cost=d_panel()[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum( value)) ), by=.(codsis199,codlft199,var) ]
+    waterfall_cost=d_wat[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum( value)) ), by=.(codsis199,codlft199,var) ]
     setkey(waterfall_cost, codsis199,codlft199, var)
     
-    waterfall_proflor=d_panel()[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum(  ifelse(var=='ricavi',value,-value)  )), var='proflor'), keyby=.(codsis199,codlft199) ][,list(codsis199,codlft199,var,value)]
+    waterfall_proflor=d_wat[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum(  ifelse(var=='ricavi',value,-value)  )), var='proflor'), keyby=.(codsis199,codlft199) ][,list(codsis199,codlft199,var,value)]
+    rm(d_wat)
     setkey(waterfall_proflor, codsis199,codlft199, var)
     
     waterfall[waterfall_cost,value:=i.value]

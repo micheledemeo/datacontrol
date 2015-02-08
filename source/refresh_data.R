@@ -2,7 +2,7 @@
 withProgress(message = "Download from remote server:",
 { 
   n=20
-  #system2("C:/nisea/batch/AggiornamentoDB.bat")
+  system2("C:/nisea/batch/AggiornamentoDB.bat")
   
   for (i in 1:n) {
     incProgress(1/n, detail =  sample(9000:70000,1) ) 
@@ -32,3 +32,4 @@ input_codsis=reactive({ input$codsis  })
 input_codlft=reactive({ input$codlft  })
 input_strato=reactive({ input$strato  })
 input_check_gio=reactive({ input$check_gio  })
+input_apply_weights=reactive({ input$apply_weights  })

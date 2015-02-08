@@ -5,12 +5,36 @@ bat_ril=fread_mysql(tbname = 'battelli_rilevatori')
 bat_ril=bat_ril[ anno==2014, list(id_battello ,id_rilevatore)]
 setkey(bat_ril, id_battello)
 
-# importa tab di aggregazioni voci di costo e genera all data.table ####
+# importa tab di aggregazioni voci di costo, genera flotta per pesi, genera all data.table ####
 aggrega_var=fread(pastedir(wd,"source/aggrega_var"),select = c('variable','var'))
 all=fread_mysql(tbname = 'battelli')
-all=all[grepl("2014",data_riferimento), .(id_battello=id,id_strato)]
+all=all[grepl("2014",data_riferimento), .(id_battello=id,id_strato,numero_ue,lft)]
 setkey(all,id_battello)
 all=all[bat_ril,nomatch=0][,i:=0]
+# crea flotta per calcolo pesi
+flotta=fread(pastedir(wd,"source/flotta"))
+
+if ( nrow(all[lft==0])>0 ) {
+  all2=all[lft==0]
+  setkey(all2, numero_ue)
+  setkey(flotta, numero_ue)
+  flotta2=all2[flotta, nomatch=0][,list(id_battello, lft=i.lft)]
+  rm(all2)
+  setkey(flotta2, id_battello)
+  setkey(all, id_battello)  
+  all[flotta2,lft:=i.lft]
+  rm(flotta2)
+  
+  if ( nrow(all[lft==0])>0 ) all[lft==0 , lft:=all[lft>0,mean(lft)] ]
+}
+
+setkey(flotta, id_strato)
+flotta = flotta[ .(all[, unique(id_strato)]) ]
+flotta=flotta[,list(numero_ue,id_strato,lft,id_battello=0)]
+flotta = rbindlist( list(flotta,all[,list(numero_ue,id_strato,lft,id_battello)] ) )
+setkey(flotta, numero_ue,id_battello)
+flotta = flotta[.(unique(numero_ue)), mult="last"]
+all[,lft:=NULL]
 cj=aggrega_var[,.(i=0,var=unique(var))]
 setkey(cj,i)
 setkey(all,i)
@@ -114,3 +138,24 @@ all=d[all]
 all[is.na(value), (var_names):=list(0)]
 rm(d)
 
+# calcola peso battello e join con all ####
+source( paste(wd, "source/pr_i.R", sep="/"),loc=T )
+
+setkey(pr_i,id_battello)
+all=pr_i[all]
+
+# calcola dati parametrici per controllo outliers ####
+all[,parameter:=as.numeric(0) ]
+all[var %in% c('spmanu','alcofi','amm','indeb','invest'),parameter:=round(as.numeric(value)) ]
+all[var %in% c('alcova','carbur','ricavi','ricavi_est') &  giorni_mare>0, parameter:=round(value/giorni_mare) ]
+all[var=='lavoro' &  giorni_mare>0, parameter:=round(value/equipaggio_medio) ]
+
+ricavi=all[var=='ricavi' & value>0, .(id_battello,ricavi=value)]
+setkey(all, id_battello)
+setkey(ricavi, id_battello)
+all=ricavi[all]
+
+all[var=='spcom' & ricavi>0 ,  parameter:=round(value/ricavi,3)  ]
+all[,ricavi:=NULL]
+rm(ricavi)
+#all[,value:=as.numeric(value)]

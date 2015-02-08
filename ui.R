@@ -29,11 +29,16 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                       
       ),
       conditionalPanel(condition="input.headtab != 7", 
-                       checkboxInput(inputId = "check_gio",label = "Fishing days>0", value=T), br(),br() 
+                       checkboxInput(inputId = "check_gio",label = "Fishing days>0", value=T)
       ),
+      conditionalPanel(condition="input.headtab == 3 || input.headtab == 4", 
+                       checkboxInput(inputId = "apply_weights",label = "Apply weights", value=T)
+      ),
+      br(),br(),
       h5("Notes:"),
       textOutput("perc_consegne_mensili"),
       textOutput("perc_consegne_annuali")
+      #,textOutput("uti")
     ),
 
     
@@ -49,7 +54,7 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                          h4("Outliers:"),
                          dataTableOutput("table_outliers_parameter")),
     
-                tabPanel("Control of % costs",value = 3,plotOutput("pie"),dataTableOutput("pie_data") ),
+                tabPanel("Pie chart - % costs",value = 3,plotOutput("pie"),dataTableOutput("pie_data") ),
                 
                 tabPanel("Waterfall: costs and profit", value = 4,
                            tabsetPanel(
