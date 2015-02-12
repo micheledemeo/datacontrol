@@ -82,7 +82,7 @@ d_mensili[is.na(value), value:=0]
 d_annuali=fread_mysql(tbname = 'schede_annuali')
 d_annuali=d_annuali[anno==2014]
 # crea control_var_mensili table con variabili che non vanno usate in melt, ma aggregate a parte e messe in join
-control_var_annuali=d_annuali[,list(Valore_di_mercato_del_bat_riltello=mean(Valore_di_mercato_del_battello),Numero_di_proprietari_del_bat_riltello=mean(Valore_di_mercato_del_battello)),keyby=.(id_battello)]
+control_var_annuali=d_annuali[,list(Valore_di_mercato_del_battello=mean(Valore_di_mercato_del_battello),Numero_di_proprietari_del_battello=mean(Numero_di_proprietari_del_battello)),keyby=.(id_battello)]
 vars=fread(pastedir(wd,"source/vars_schede_annuali"),header = F)
 vars=c("id_battello",vars$V1)
 d_annuali=d_annuali[,vars,with=F]
@@ -126,11 +126,11 @@ setkey(d, id_battello)
 d=control_var_mensili[d]
 d[is.na(giorni_mare), (c('giorni_mare','equipaggio_medio','volume_carburante')):=list(0,0,0)]
 d=control_var_annuali[d]
-d[is.na(Valore_di_mercato_del_bat_riltello), (c('Valore_di_mercato_del_bat_riltello','Numero_di_proprietari_del_bat_riltello')):=list(0,0)]
+d[is.na(Valore_di_mercato_del_battello), (c('Valore_di_mercato_del_battello','Numero_di_proprietari_del_battello')):=list(0,0)]
 rm(control_var_annuali,control_var_mensili)
 
 # left join with all ####
-d[,sent:=as.numeric(0)]
+d[,sent:=as.numeric(1)]
 var_names=names(d)[!names(d) %in% c('id_battello','var')]
 setkey(all,id_battello,var)
 setkey(d,id_battello,var)
