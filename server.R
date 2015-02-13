@@ -92,6 +92,11 @@ shinyServer(function(input, output, session) {
     
   })
   
+  output$download_outliers_value = downloadHandler(   
+    filename = "outliers_abs.csv",
+    content = function(file) write.table( d_outliers_value(), file, sep=";",quote=F, na="",row.names = F)
+  )
+  
   d_outliers_parameter=reactive({
     
     d_outliers=d_panel()
@@ -104,6 +109,11 @@ shinyServer(function(input, output, session) {
     d_outliers
     
   })
+  
+  output$download_outliers_parameter = downloadHandler(   
+    filename = "outliers_mean.csv",
+    content = function(file) write.table( d_outliers_parameter(), file, sep=";",quote=F, na="",row.names = F)
+  )
   
   # definisci i waterfall data.table ####
   source( paste(getwd(), "source/waterfall.R", sep="/"),loc=T )
@@ -181,7 +191,6 @@ shinyServer(function(input, output, session) {
   output$download_zero_checks = downloadHandler(   
       filename = "zero_checks.csv",
       content = function(file) write.table( zero_checks(), file, sep=";",quote=F, na="",row.names = F)
-      #,contentType = "text/plain" 
   )
   output$download_not_sent = downloadHandler(    
     filename = "not_sent.csv",
