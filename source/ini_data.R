@@ -11,6 +11,7 @@ all=fread_mysql(tbname = 'battelli')
 all=all[grepl("2014",data_riferimento), .(id_battello=id,id_strato,numero_ue,lft)]
 setkey(all,id_battello)
 all=all[bat_ril,nomatch=0][,i:=0]
+bat_ril=bat_ril[ all[,list(id_battello,id_strato)] ]
 # crea flotta per calcolo pesi
 flotta=fread(pastedir(wd,"source/flotta"))
 
@@ -91,6 +92,9 @@ d_annuali=d_annuali[,vars,with=F]
 consegne_annuali=d_annuali[,list(a=1),keyby=id_battello]
 bat_ril=consegne_annuali[bat_ril][is.na(a),a:=0]
 rm(consegne_annuali)
+# consegne a livello di strato:
+bat_str=bat_ril[,list(yearly_sent=sum2(a),yearly_tot=.N,monthly_sent=sum2(m),monthly_tot=12*.N),keyby=id_strato]
+# consegne a livello di id_rilevatore:
 bat_ril=bat_ril[,list(yearly_sent=sum2(a),yearly_tot=.N,monthly_sent=sum2(m),monthly_tot=12*.N),keyby=id_rilevatore]
 perc_consegne_annuali=bat_ril[,sum2(yearly_sent)/sum2(yearly_tot)]
 perc_consegne_annuali = if (perc_consegne_annuali>=.99 & perc_consegne_annuali<1) 99 else round(100*perc_consegne_annuali)
@@ -138,11 +142,12 @@ all=d[all]
 all[is.na(value), (var_names):=list(0)]
 rm(d)
 
-# calcola peso battello e join con all ####
-source( paste(wd, "source/pr_i.R", sep="/"),loc=T )
+# aggiorna sent=1 quando battello ha almeno un sent=1 e un sent=0 (ha inviato solo una tra scheda annuale e mensile)
+setkey(all, id_battello)
+all[ all[sent==1,.(unique(id_battello))] , sent:=1 ]
 
-setkey(pr_i,id_battello)
-all=pr_i[all]
+# calcola pesi iniziali per battello ####
+source( paste(wd, "source/ini_pr_i.R", sep="/"),loc=T )
 
 # calcola dati parametrici per controllo outliers ####
 all[,parameter:=as.numeric(0) ]

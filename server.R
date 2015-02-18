@@ -15,7 +15,7 @@ shinyServer(function(input, output, session) {
   # refresh data with an action button
   observe({ if (input$refresh > 0) source( paste(getwd(), "source/refresh_data.R", sep="/"),loc=T )  })
   
-  output$var=renderUI({  selectInput("var", label = "Select the variables:", choices =var, selected = var, multiple = T ) })  
+  output$var=renderUI({  selectInput("var", label = "Select the variables:", choices =var, selected = var, multiple = T ) })
   output$codsis=renderUI({selectInput("codsis", label = "Apply a filter on gear type:", choices =codsis, selected = codsis, multiple = T ) })
   output$codlft=renderUI({ selectInput("codlft", label = "Apply a filter on LOA:", choices =codlft, selected = codlft, multiple = T ) })
   
@@ -38,6 +38,20 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  # mediante conditional panel, not_sent_to_0 scompare quando input_check_gio()==1 
+  observe({ if( input_check_gio()==1 ) updateCheckboxInput( session, "not_sent_as_0", value = 0) })
+  
+  selected_strata=reactive({ 
+    
+    if (  !is.null( input_strato() ) ) as.numeric(input_strato())
+    else if ( !is.null(input_codsis()) &  is.null(input_codlft()) )  str_sis_lft[ codsis199 %in%  input_codsis(),  unique(id_strato)]
+    else if ( is.null(input_codsis()) &  !is.null(input_codlft()) )  str_sis_lft[ codlft199 %in%  input_codlft(),  unique(id_strato)]
+    else if ( !is.null(input_codsis()) &  !is.null(input_codlft()) ) str_sis_lft[ codsis199 %in%  input_codsis() & codlft199 %in%  input_codlft(),  unique(id_strato)]  
+    else str_sis_lft[ , unique(id_strato)]
+    
+  })
+  
+  # d_panel ####
   # considering updateSelectInput, the last else in d_panel will never be true
   d_panel=reactive({ 
     
@@ -47,7 +61,25 @@ shinyServer(function(input, output, session) {
     else if ( !is.null(input_codsis()) &  !is.null(input_codlft()) ) all[giorni_mare>(input_check_gio()-1)  & codsis199 %in% input_codsis() & codlft199 %in% input_codlft()]  
     else all[0]
     
+    if( input_not_sent_as_0()==0 ) d_panel=d_panel[sent==1]
+    
+    setkey(d_panel,id_battello)
+    d_panel=pr_i[d_panel]
+    d_panel[is.na(pr_i), pr_i:=Inf]
+    
+    # refresh di pr_i
+    if( input_not_sent_as_0()==1 ) {
+      # genero il pr_i_temp per il refresh dei soli strati selezionai
+      source( paste(getwd(), "source/refresh_pr_i.R", sep="/"),loc=T )      
+      # join con d_panel e update di pr_i ####
+      #  apparentemente non sarebbe necessario un setkey, essendo già eseguito prima, ma se lo tolgo la key mi cambia con la generazione delle waterfall (non chiaro il motivo)
+      setkey(d_panel, id_battello)
+      d_panel[pr_i_temp, pr_i:=i.pr_i, nomatch=0]
+      rm(pr_i_temp) 
+    }
+   
     if (input$headtab <=2 | input$headtab==6) d_panel[ var %in% input_var() ] else d_panel
+   
     
   })
   
@@ -185,7 +217,7 @@ shinyServer(function(input, output, session) {
   
   # genera dataset da esportare in "At sample level" tabset ####
   zero_checks=reactive({ d_panel()[value==0 & sent==1 , setdiff(names(d_panel()),c('sent','parameter','pr_i')), with=F ] })
-  not_sent=reactive({ all[sent==0 , .N ,list(id_battello,numero_ue,id_rilevatore,id_strato,regione,codsis199,codlft199,gsa,descrizione,var) ][,N:=NULL] })  
+  not_sent=reactive({ all[sent==0 , .N ,list(id_battello,numero_ue,id_rilevatore,id_strato,regione,codsis199,codlft199,gsa,descrizione) ][,N:=NULL] })  
   output$zero_checks_dt = renderDataTable({ zero_checks() })
   output$not_sent_dt = renderDataTable({ not_sent() })
   output$download_zero_checks = downloadHandler(   
@@ -203,10 +235,10 @@ shinyServer(function(input, output, session) {
   output$table_outliers_parameter = renderDataTable({d_outliers_parameter()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,parameter,value)]})
   output$pie_data = renderDataTable({d_pie()[,1:(ncol(d_pie() ) -1), with=F ] })
   output$table_free_filters=renderDataTable({  all[giorni_mare>(input_check_gio()-1) ] })
-  output$table_consegne=renderDataTable({bat_ril})
+  output$table_consegne_ril=renderDataTable({bat_ril})
+  output$table_consegne_strato=renderDataTable({bat_str})
   output$perc_consegne_annuali=renderText({ perc_consegne_annuali })
   output$perc_consegne_mensili=renderText({ perc_consegne_mensili })
   
-  #output$uti = renderDataTable({ d_waterfall_italy() })
   
 })

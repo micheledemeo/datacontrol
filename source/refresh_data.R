@@ -2,7 +2,7 @@
 withProgress(message = "Download from remote server:",
 { 
   n=20
-  system2("C:/nisea/batch/AggiornamentoDB.bat")
+  #system2("C:/nisea/batch/AggiornamentoDB.bat")
   
   for (i in 1:n) {
     incProgress(1/n, detail =  sample(9000:70000,1) ) 
@@ -22,10 +22,12 @@ withProgress(message = "Loading data from local MySql:",
   }
 })
 
+
 var=all[,unique(var)]
 strato=all[,unique(id_strato)]
 codsis=all[,unique(codsis199)]
 codlft=all[,unique(codlft199)]
+str_sis_lft=all[,.N,by=list(id_strato,codsis199,codlft199)][,N:=NULL]
 
 input_var=reactive({ input$var  })
 input_codsis=reactive({ input$codsis  })
@@ -33,3 +35,4 @@ input_codlft=reactive({ input$codlft  })
 input_strato=reactive({ input$strato  })
 input_check_gio=reactive({ input$check_gio  })
 input_apply_weights=reactive({ input$apply_weights  })
+input_not_sent_as_0=reactive({ input$not_sent_as_0  })

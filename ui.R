@@ -34,6 +34,9 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                        conditionalPanel(condition="input.headtab == 3 || input.headtab == 4", 
                                         checkboxInput(inputId = "apply_weights",label = "Apply weights", value=T)
                        ),
+                       conditionalPanel(condition="(input.headtab >= 1 & input.headtab <= 4) & input.check_gio==0", 
+                                        checkboxInput(inputId = "not_sent_as_0",label = "Not-sent as zero-values", value=F)
+                       ),
                        conditionalPanel(condition="input.headtab == 1",
                                         downloadButton('download_outliers_value', 'Download')),
                        conditionalPanel(condition="input.headtab == 2",
@@ -79,16 +82,23 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                    
                                    tabPanel("At sample level", value = 6,
                                             tabsetPanel(id="at_sample_level",
-                                                        tabPanel("Zero checks",value=61,dataTableOutput("zero_checks_dt")),
+                                                        tabPanel("Zero checks for sent data",value=61,dataTableOutput("zero_checks_dt")),
                                                         tabPanel("Not sent",value=62, dataTableOutput("not_sent_dt")),
                                                         tabPanel("Units to be confirmed"),
                                                         tabPanel("Single vars")
                                             )
                                    ),
                                    
-                                   tabPanel("Delivery status", value = 7, dataTableOutput("table_consegne"))
-                       )
+                                   tabPanel("Delivery status", value = 7, 
+                                            tabsetPanel(
+                                                        tabPanel("Data collector level",dataTableOutput("table_consegne_ril") ),
+                                                        tabPanel("Strata level",dataTableOutput("table_consegne_strato"))
+                                                        )
+                                            )
                      )
                      
                      
-                   )))
+                   )
+                   )
+                   )
+        )
