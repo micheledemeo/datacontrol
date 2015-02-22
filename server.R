@@ -17,11 +17,10 @@ shinyServer(function(input, output, session) {
   
   output$var=renderUI({  selectInput("var", label = "Select the variables:", choices =var, selected = var, multiple = T ) })
   output$codsis=renderUI({selectInput("codsis", label = "Apply a filter on gear type:", choices =codsis, selected = codsis, multiple = T ) })
-  output$codlft=renderUI({ selectInput("codlft", label = "Apply a filter on LOA:", choices =codlft, selected = codlft, multiple = T ) })
-  
+  output$codlft=renderUI({ selectInput("codlft", label = "Apply a filter on LOA:", choices =codlft, selected = codlft, multiple = T ) })  
   output$strato=renderUI({ selectInput("strato", label = "Select the strata:", choices =strato, selected = NULL, multiple = T ) })
-  
-  output$nr_strato=renderUI({ selectInput("nr_strato", label = "Select the strata:", choices =strato, selected = NULL, multiple = T ) })
+#   output$abs_or_mean_in_fix=renderUI({ radioButtons("abs_or_mean_in_fix", label = "Choose if refer to abs-outliers or mean-outliers",
+#                                                     choices = list("abs-outliers" = 1, "mean-outliers" = 2), selected = 1) })
   
   observe({ if (!is.null(input_codsis()) | !is.null(input_codlft())  ) updateSelectInput(session, "strato", choices =strato, selected = NULL) })
   observe({ 
@@ -78,11 +77,10 @@ shinyServer(function(input, output, session) {
       rm(pr_i_temp) 
     }
    
-    if (input$headtab <=2 | input$headtab==6) d_panel[ var %in% input_var() ] else d_panel
-   
-    
+    if (input$headtab <=2 | input$headtab>=6) d_panel[ var %in% input_var() ] else d_panel
   })
-  
+
+
   ok_rows=reactive({nrow(d_panel())>0})
   
   # considering updateSelectInput, the last else in facet will never be true
@@ -119,8 +117,7 @@ shinyServer(function(input, output, session) {
     setkey(d_outliers, var )
     setkey(d_outliers2, var )
     
-    d_outliers=d_outliers2[d_outliers][value>out_up | value<out_down][,c('out_up','out_down'):=NULL]
-    d_outliers
+    d_outliers2[d_outliers][value>out_up | value<out_down][,c('out_up','out_down'):=NULL]
     
   })
   
@@ -137,8 +134,7 @@ shinyServer(function(input, output, session) {
     setkey(d_outliers, var )
     setkey(d_outliers2, var )
     
-    d_outliers=d_outliers2[d_outliers][parameter>out_up | parameter<out_down][,c('out_up','out_down'):=NULL]
-    d_outliers
+    d_outliers2[d_outliers][parameter>out_up | parameter<out_down][,c('out_up','out_down'):=NULL]
     
   })
   
@@ -229,16 +225,29 @@ shinyServer(function(input, output, session) {
     content = function(file) write.table( not_sent(), file, sep=";",quote=F, na="",row.names = F)
   )
   
-  
+source( paste(getwd(), "source/imputation.R", sep="/"),loc=T )
+
   #output$table_data = renderTable({head(d_panel() )})
-  output$table_outliers_value = renderDataTable({d_outliers_value()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,value,parameter)]})
-  output$table_outliers_parameter = renderDataTable({d_outliers_parameter()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,parameter,value)]})
+  output$table_outliers_value = renderDataTable({d_outliers_value()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,value,is_ok,final_value=ifelse(is_ok==1,value_ok,NA))]})
+  output$table_outliers_parameter = renderDataTable({d_outliers_parameter()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,parameter,value,is_ok,final_value=ifelse(is_ok==1,value_ok,NA))]})
   output$pie_data = renderDataTable({d_pie()[,1:(ncol(d_pie() ) -1), with=F ] })
   output$table_free_filters=renderDataTable({  all[giorni_mare>(input_check_gio()-1) ] })
   output$table_consegne_ril=renderDataTable({bat_ril})
   output$table_consegne_strato=renderDataTable({bat_str})
   output$perc_consegne_annuali=renderText({ perc_consegne_annuali })
   output$perc_consegne_mensili=renderText({ perc_consegne_mensili })
+output$notes_on_fixing=renderText({ 
+  out=
+    if (  !is.null( input_strato() ) ) paste(input_strato(),collapse = ",")
+  else if ( !is.null(input_codsis()) &  is.null(input_codlft()) ) paste0(input_codsis(),collapse = ",")
+  else if ( is.null(input_codsis()) &  !is.null(input_codlft()) )  paste0(input_codlft(),collapse = ",") 
+  else if ( !is.null(input_codsis()) &  !is.null(input_codlft()) ) paste( paste0(input_codsis(),collapse = ",") , paste0(input_codlft(),collapse = ",") ,sep = " and " )
+  else "NOTHING"  
   
+  out= paste(" Fixing outliers for STRATA: \n", out, "\n and VARIABLES: \n", paste(input_var(),collapse = ",") )
+  out= paste(out, "\n applying the \n Tukey's non-parametric distribution of", input$abs_or_mean_in_fix )
+  out
+  
+})
   
 })

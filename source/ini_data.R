@@ -164,3 +164,15 @@ all[var=='spcom' & ricavi>0 ,  parameter:=round(value/ricavi,3)  ]
 all[,ricavi:=NULL]
 rm(ricavi)
 #all[,value:=as.numeric(value)]
+
+# aggiungi labels per gestione outliers ####
+all[,c('value_ok','is_ok','notes'):=list(value,0,"") ]
+# importa da db lo storico delle modifiche
+hist=fread(pastedir(wd,"source/hist") )
+if(nrow(hist)>0){
+  setkey(hist, id_battello,var)
+  setkey(all, id_battello,var)
+  all=hist[all]
+  all[!is.na(hist_value), (c('value_ok','notes','is_ok','hist_is_ok')):=list(hist_value,hist_notes,1,1)]  
+}
+

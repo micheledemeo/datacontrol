@@ -14,7 +14,7 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                      
                      sidebarPanel(
                        
-                       actionButton("refresh", "Refresh data from remote server") ,br(), br(), uiOutput("str_in_wat") ,
+                       actionButton("refresh", "Refresh data from remote server") ,br(), br(), #uiOutput("str_in_wat") ,
                        conditionalPanel(condition="input.headtab == 1 || input.headtab == 2 || (input.headtab == 6 && input.at_sample_level == 61)", uiOutput("var"), br(), br() ),
                        conditionalPanel(condition="(input.headtab >= 1 && input.headtab <= 4) || (input.headtab == 6 && input.at_sample_level == 61)",
                                         uiOutput("codsis"),
@@ -28,8 +28,31 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                         br()
                                         
                        ),
-                       conditionalPanel(condition="input.headtab != 7 & !(input.headtab == 6 && input.at_sample_level == 62)", 
-                                        checkboxInput(inputId = "check_gio",label = "Fishing days>0", value=T)
+                       conditionalPanel(condition="input.headtab == 8 ",
+                                        radioButtons("abs_or_mean_in_fix", label = "Choose if refer to abs-outliers or mean-outliers",
+                                                     choices = list("abs-outliers" = 'abs-outliers', "mean-outliers" = 'mean-outliers'), selected = 'abs-outliers'),
+                                        radioButtons("accept_refuse_outliers", label = "Choose if accept outliers",
+                                                     choices = list("keep the data from the server"='keep',"accept outliers as ok-values" = "accept", "start imputation" = "refuse"), selected = "keep"),
+                                        
+                                        conditionalPanel(condition="input.accept_refuse_outliers == 'accept'",
+                                                         radioButtons("accept_all_or_list", label = "Choose which outliers",
+                                                                      choices = list("all" = 'all', "list of id_battello" = 'list'), selected = 'all'),
+                                                         conditionalPanel(condition="input.accept_all_or_list == 'list'",
+                                                                           textInput("id_battello_list_to_accept", label = "")
+                                                                          )
+                                                         ),
+                                        conditionalPanel(condition="input.accept_refuse_outliers == 'refuse'",
+                                                         radioButtons("group_for_imputation_method", label = "Choose how to group units to build the model",
+                                                                      choices = list("same strata"="strata", "same gear"='gear', "same loa"='loa', "same gear and loa"='gear_loa', "all data"='all_data' ), selected = 'strata'),
+                                                         radioButtons("imputation_method", label = "Choose the imputation model to fix outliers",
+                                                                      choices = list("mean of the group"='mean', "regression"='regression', "hot-deck"='hot-deck', "manual"='manual' ), selected = 'mean')
+                                                         )
+                       ),
+                       conditionalPanel(condition="input.headtab == 8 & input.accept_refuse_panel == 82", 
+                                        actionButton("refuse_imputation", label = "Refuse imputation")
+                       ),
+                       conditionalPanel(condition="input.headtab <=6 & !(input.headtab == 6 && input.at_sample_level == 62)", 
+                                        checkboxInput(inputId = "check_gio",label = "Fishing days>0", value=F)
                        ),
                        conditionalPanel(condition="input.headtab == 3 || input.headtab == 4", 
                                         checkboxInput(inputId = "apply_weights",label = "Apply weights", value=T)
@@ -47,8 +70,10 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                         downloadButton('download_not_sent', 'Download')),
                        br(),br(),
                        h5("Notes:"),
-                       textOutput("perc_consegne_mensili"),
-                       textOutput("perc_consegne_annuali")
+                       verbatimTextOutput("perc_consegne_mensili"),
+                       verbatimTextOutput("perc_consegne_annuali"),
+                       conditionalPanel(condition="input.headtab == 8",
+                                        verbatimTextOutput("notes_on_fixing")) #textOutput("notes_on_fixing"))
                        #,textOutput("uti")
                      ),
                      
@@ -80,12 +105,10 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                    
                                    tabPanel("Free filters on the data",value = 5,dataTableOutput("table_free_filters")),
                                    
-                                   tabPanel("At sample level", value = 6,
+                                   tabPanel("Checks on zero values", value = 6,
                                             tabsetPanel(id="at_sample_level",
                                                         tabPanel("Zero checks for sent data",value=61,dataTableOutput("zero_checks_dt")),
-                                                        tabPanel("Not sent",value=62, dataTableOutput("not_sent_dt")),
-                                                        tabPanel("Units to be confirmed"),
-                                                        tabPanel("Single vars")
+                                                        tabPanel("Not sent",value=62, dataTableOutput("not_sent_dt"))
                                             )
                                    ),
                                    
@@ -94,6 +117,9 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                                         tabPanel("Data collector level",dataTableOutput("table_consegne_ril") ),
                                                         tabPanel("Strata level",dataTableOutput("table_consegne_strato"))
                                                         )
+                                            ),
+                                   tabPanel("Imputation process", value = 8,
+                                             dataTableOutput("outliers_in_imputation")
                                             )
                      )
                      
