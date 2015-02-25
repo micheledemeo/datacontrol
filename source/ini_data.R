@@ -153,7 +153,7 @@ source( paste(wd, "source/ini_pr_i.R", sep="/"),loc=T )
 all[,parameter:=as.numeric(0) ]
 all[var %in% c('spmanu','alcofi','amm','indeb','invest'),parameter:=round(as.numeric(value)) ]
 all[var %in% c('alcova','carbur','ricavi','ricavi_est') &  giorni_mare>0, parameter:=round(value/giorni_mare) ]
-all[var=='lavoro' &  giorni_mare>0, parameter:=round(value/equipaggio_medio) ]
+all[var=='lavoro' &  equipaggio_medio>0, parameter:=round(value/equipaggio_medio) ]
 
 ricavi=all[var=='ricavi' & value>0, .(id_battello,ricavi=value)]
 setkey(all, id_battello)
