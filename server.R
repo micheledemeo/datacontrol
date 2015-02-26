@@ -248,6 +248,7 @@ output$notes_on_fixing=renderText({
   out= paste(out, "\n applying the \n Tukey's non-parametric distribution of", input$abs_or_mean_in_fix )
   out
   
-})
+  })
+  
   
 })

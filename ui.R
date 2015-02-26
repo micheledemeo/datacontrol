@@ -31,17 +31,14 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                        conditionalPanel(condition="input.headtab == 8 ",
                                         radioButtons("abs_or_mean_in_fix", label = "Choose if refer to abs-outliers or mean-outliers",
                                                      choices = list("abs-outliers" = 'abs-outliers', "mean-outliers" = 'mean-outliers'), selected = 'abs-outliers'),
-                                        radioButtons("accept_refuse_outliers", label = "Choose if accept outliers",
-                                                     choices = list("keep the data from the server"='keep',"accept outliers as ok-values" = "accept", "start imputation" = "refuse"), selected = "keep"),
-                                        
-                                        conditionalPanel(condition="input.accept_refuse_outliers == 'accept'",
-                                                         radioButtons("accept_all_or_list", label = "Choose which outliers",
-                                                                      choices = list("all" = 'all', "list of id_battello" = 'list'), selected = 'all'),
-                                                         conditionalPanel(condition="input.accept_all_or_list == 'list'",
-                                                                           textInput("id_battello_list_to_accept", label = "")
-                                                                          )
+                                        radioButtons("subset_units", label = "Choose if subset specific units",
+                                                     choices = list("all units" = 'all', "subset units" = 'subset'), selected = 'all'),
+                                        conditionalPanel(condition="input.subset_units == 'subset'",
+                                                         uiOutput("outliers_id_battello_list_to_subset")
                                                          ),
-                                        conditionalPanel(condition="input.accept_refuse_outliers == 'refuse'",
+                                        radioButtons("keep_accept_refuse_outliers", label = "Choose if accept outliers",
+                                                     choices = list("keep the data from the server"='keep',"accept outliers as ok-values" = "accept", "start imputation" = "refuse"), selected = "keep"),
+                                        conditionalPanel(condition="input.keep_accept_refuse_outliers == 'refuse'",
                                                          radioButtons("group_for_imputation_method", label = "Choose how to group units to build the model",
                                                                       choices = list("same strata"="strata", "same gear"='gear', "same loa"='loa', "same gear and loa"='gear_loa', "all data"='all_data' ), selected = 'strata'),
                                                          radioButtons("imputation_method", label = "Choose the imputation model to fix outliers",
@@ -74,7 +71,7 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                        verbatimTextOutput("perc_consegne_annuali"),
                        conditionalPanel(condition="input.headtab == 8",
                                         verbatimTextOutput("notes_on_fixing")) #textOutput("notes_on_fixing"))
-                       #,textOutput("uti")
+                       ,textOutput("uti")
                      ),
                      
                      
@@ -119,7 +116,7 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                                         )
                                             ),
                                    tabPanel("Imputation process", value = 8,
-                                             dataTableOutput("outliers_in_imputation")
+                                             dataTableOutput("outliers_in_imputation_dt")
                                             )
                      )
                      
