@@ -237,16 +237,26 @@ source( paste(getwd(), "source/imputation.R", sep="/"),loc=T )
   output$perc_consegne_annuali=renderText({ perc_consegne_annuali })
   output$perc_consegne_mensili=renderText({ perc_consegne_mensili })
 output$notes_on_fixing=renderText({ 
-  out=
+    out=
     if (  !is.null( input_strato() ) ) paste(input_strato(),collapse = ",")
-  else if ( !is.null(input_codsis()) &  is.null(input_codlft()) ) paste0(input_codsis(),collapse = ",")
-  else if ( is.null(input_codsis()) &  !is.null(input_codlft()) )  paste0(input_codlft(),collapse = ",") 
-  else if ( !is.null(input_codsis()) &  !is.null(input_codlft()) ) paste( paste0(input_codsis(),collapse = ",") , paste0(input_codlft(),collapse = ",") ,sep = " and " )
-  else "NOTHING"  
-  
-  out= paste(" Fixing outliers for STRATA: \n", out, "\n and VARIABLES: \n", paste(input_var(),collapse = ",") )
-  out= paste(out, "\n applying the \n Tukey's non-parametric distribution of", input$abs_or_mean_in_fix )
-  out
+    else if ( !is.null(input_codsis()) &  is.null(input_codlft()) ) paste0(input_codsis(),collapse = ",")
+    else if ( is.null(input_codsis()) &  !is.null(input_codlft()) )  paste0(input_codlft(),collapse = ",") 
+    else if ( !is.null(input_codsis()) &  !is.null(input_codlft()) ) paste( paste0(input_codsis(),collapse = ",") , paste0(input_codlft(),collapse = ",") ,sep = " and " )
+    else "NOTHING"      
+    out= paste(" Fixing outliers for STRATA: \n", out, "\n and VARIABLES: \n", paste(input_var(),collapse = ",") )
+    out= paste(out, "\n applying the Tukey's non-parametric distribution of", input_abs_or_mean_in_fix() ,".\n")    
+    out= paste(out, if( input_subset_units()=='all' ) "You are considering all units selected in the initial tab" else paste("You are subsetting the following units:", paste( input_outliers_id_battello_list_to_subset() , collapse="," )) ,  ".\n"  )  
+    out=paste(out,
+      if(input_keep_accept_refuse_outliers()=='keep') {
+        "You are keeping the situation as it is ."     
+      }  else if( input_keep_accept_refuse_outliers()=='accept' ) {
+        "You are accepting outliers as ok-values."
+      } else {
+        paste("You are applying the foollowing model to correct outliers:\n", input_imputation_method() ,"for data gouped by", input_group_for_imputation_method(),"." )
+        
+      }
+    )  
+    out
   
   })
   
