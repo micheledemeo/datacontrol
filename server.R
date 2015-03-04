@@ -19,8 +19,6 @@ shinyServer(function(input, output, session) {
   output$codsis=renderUI({selectInput("codsis", label = "Apply a filter on gear type:", choices =codsis, selected = codsis, multiple = T ) })
   output$codlft=renderUI({ selectInput("codlft", label = "Apply a filter on LOA:", choices =codlft, selected = codlft, multiple = T ) })  
   output$strato=renderUI({ selectInput("strato", label = "Select the strata:", choices =strato, selected = NULL, multiple = T ) })
-#   output$abs_or_mean_in_fix=renderUI({ radioButtons("abs_or_mean_in_fix", label = "Choose if refer to abs-outliers or mean-outliers",
-#                                                     choices = list("abs-outliers" = 1, "mean-outliers" = 2), selected = 1) })
   
   observe({ if (!is.null(input_codsis()) | !is.null(input_codlft())  ) updateSelectInput(session, "strato", choices =strato, selected = NULL) })
   observe({ 
@@ -111,12 +109,10 @@ shinyServer(function(input, output, session) {
   
   d_outliers_value=reactive({
     
-    d_outliers=d_panel()
-    by_vars=c('codsis199','codlft199','id_strato','var')[ c('codsis199','codlft199','id_strato','var') %in% names(d_panel())]
-    d_outliers2=d_panel()[,list( out_up=quantile(value,.75)+1.5*IQR(value), out_down=quantile(value,.25)-1.5*IQR(value) ),  keyby=.(var)]
+    d_outliers=d_panel()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,value,is_ok,value_ok)]
+    d_outliers2=d_outliers[,list( out_up=quantile(value,.75)+1.5*IQR(value), out_down=quantile(value,.25)-1.5*IQR(value) ),  keyby=.(var)]
     setkey(d_outliers, var )
-    setkey(d_outliers2, var )
-    
+    setkey(d_outliers2, var )    
     d_outliers2[d_outliers][value>out_up | value<out_down][,c('out_up','out_down'):=NULL]
     
   })
@@ -128,12 +124,10 @@ shinyServer(function(input, output, session) {
   
   d_outliers_parameter=reactive({
     
-    d_outliers=d_panel()
-    by_vars=c('codsis199','codlft199','id_strato','var')[ c('codsis199','codlft199','id_strato','var') %in% names(d_panel())]
-    d_outliers2=d_panel()[,list( out_up=quantile(parameter,.75)+1.5*IQR(parameter), out_down=quantile(parameter,.25)-1.5*IQR(parameter) ),  keyby=.(var)]
+    d_outliers=d_panel()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,value,is_ok,value_ok,parameter)]
+    d_outliers2=d_outliers[,list( out_up=quantile(parameter,.75)+1.5*IQR(parameter), out_down=quantile(parameter,.25)-1.5*IQR(parameter) ),  keyby=.(var)]
     setkey(d_outliers, var )
-    setkey(d_outliers2, var )
-    
+    setkey(d_outliers2, var )    
     d_outliers2[d_outliers][parameter>out_up | parameter<out_down][,c('out_up','out_down'):=NULL]
     
   })
