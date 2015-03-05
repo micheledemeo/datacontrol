@@ -166,7 +166,10 @@ rm(ricavi)
 #all[,value:=as.numeric(value)]
 
 # aggiungi labels per gestione outliers ####
-all[,c('value_ok','is_ok','notes'):=list(value,0,"") ]
+# value_or è il valore originiale scaricato da server
+# value_ok è il valore finale su cui si fa l'espansione. esso comprende le imputazioni dell'utente
+# value è il campo usato nelle visualizzazioni grafiche. è pari a value_orig (default) se "Keep outliers in your charts", mentre diventa pari a value_ok quando "Take a tour with imputations"
+all[,c('value_ok','value_or','is_ok','notes'):=list(value,value,0,"") ]
 # importa da db lo storico delle modifiche
 hist=fread(pastedir(wd,"source/hist") )
 if(nrow(hist)>0){

@@ -28,7 +28,7 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                         br()
                                         
                        ),
-                       conditionalPanel(condition="input.headtab == 8 ",
+                       conditionalPanel(condition="input.headtab == 8 & input.freeze_data=='no' ",
                                         radioButtons("abs_or_mean_in_fix", label = "Choose if refer to abs-outliers or mean-outliers",
                                                      choices = list("abs-outliers" = 'abs-outliers', "mean-outliers" = 'mean-outliers'), selected = 'abs-outliers'),
                                         radioButtons("subset_units", label = "Choose if subset specific units",
@@ -48,9 +48,6 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                                          )
                                         )
                        ),
-                       conditionalPanel(condition="input.headtab == 8 & input.accept_refuse_panel == 82", 
-                                        actionButton("refuse_imputation", label = "Refuse imputation")
-                       ),
                        conditionalPanel(condition="input.headtab <=6 & !(input.headtab == 6 && input.zero_or_not_sent == 62)", 
                                         checkboxInput(inputId = "check_gio",label = "Days at sea > 0", value=F)
                        ),
@@ -60,7 +57,7 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                        conditionalPanel(condition="(input.headtab >= 1 & input.headtab <= 4) & input.check_gio==0", 
                                         checkboxInput(inputId = "not_sent_as_0",label = "Not-sent as zero-values", value=F)
                        ),
-                       conditionalPanel(condition="input.headtab <=4 | input.headtab == 8",
+                       conditionalPanel(condition="input.headtab == 8",
                                         radioButtons("freeze_data", label = "Freeze data with imputations",
                                                      choices = list("Take a tour with imputations" = 'yes', "Keep outliers in your charts" = 'no'), selected = 'no')
                        ),
