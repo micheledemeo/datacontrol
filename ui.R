@@ -121,6 +121,9 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                    ),
                                    tabPanel("Imputation process", value = 8,
                                             dataTableOutput("outliers_in_imputation_dt")
+                                   ),
+                                   tabPanel("Upload", value = 9,
+                                            dataTableOutput("upload_dt")
                                    )
                        )
                        

@@ -52,7 +52,7 @@ shinyServer(function(input, output, session) {
   # considering updateSelectInput, the last else in d_panel will never be true
   d_panel=reactive({ 
     
-    input_freeze_data()
+   input_freeze_data()
     
     d_panel=if (  !is.null( input_strato() ) ) all[giorni_mare>(input_check_gio()-1) & id_strato %in% input_strato() ]
     else if ( !is.null(input_codsis()) &  is.null(input_codlft()) )  all[giorni_mare>(input_check_gio()-1)  & codsis199 %in% input_codsis()]
@@ -125,6 +125,8 @@ shinyServer(function(input, output, session) {
   )
   
   d_outliers_parameter=reactive({
+    
+   #if (input_freeze_data()=='yes') all[,(c('value','parameter')):=list(value_ok,parameter_ok)] else all[,(c('value','parameter')):=list(value_or,parameter_or)]
     
     d_outliers=d_panel()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,value,is_ok,value_ok,parameter,value_or)]
     d_outliers2=d_outliers[,list( out_up=quantile(parameter,.75)+1.5*IQR(parameter), out_down=quantile(parameter,.25)-1.5*IQR(parameter) ),  keyby=.(var)]
@@ -227,8 +229,8 @@ observe({
     if (input_abs_or_mean_in_fix()=="abs-outliers") updateTabsetPanel(session, "headtab" ,selected = '1') else updateTabsetPanel(session, "headtab" ,selected = '2')
   } 
 })
+observe({ if (input_freeze_data()=='yes') all[,(c('value','parameter')):=list(value_ok,parameter_ok)] else all[,(c('value','parameter')):=list(value_or,parameter_or)] })
 
-  #output$table_data = renderTable({head(d_panel() )})
   output$table_outliers_value = renderDataTable({d_outliers_value()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,original_value=value_or,is_ok,final_value=ifelse(is_ok==1,value_ok,NA))]})
   output$table_outliers_parameter = renderDataTable({d_outliers_parameter()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,parameter,original_value=value_or,is_ok,final_value=ifelse(is_ok==1,value_ok,NA))]})
   output$pie_data = renderDataTable({d_pie()[,1:(ncol(d_pie() ) -1), with=F ] })
@@ -260,6 +262,9 @@ output$notes_on_fixing=renderText({
     out
   
   })
+output$uti=renderText({input_freeze_data() })
+is_ok_tick=reactive({ if (input$headtab==1) 1 else 1 })
+output$upload_dt = renderDataTable({all[is_ok==is_ok_tick() ,.(id_rilevatore,var,id_strato,id_battello,is_ok,value_ok,value_or,value,parameter_ok,parameter_or,parameter,notes)]})
   
   
 })

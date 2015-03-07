@@ -154,28 +154,25 @@ all[,parameter:=as.numeric(0) ]
 all[var %in% c('spmanu','alcofi','amm','indeb','invest'),parameter:=round(as.numeric(value)) ]
 all[var %in% c('alcova','carbur','ricavi','ricavi_est') &  giorni_mare>0, parameter:=round(value/giorni_mare) ]
 all[var=='lavoro' &  equipaggio_medio>0, parameter:=round(value/equipaggio_medio) ]
-
 ricavi=all[var=='ricavi' & value>0, .(id_battello,ricavi=value)]
 setkey(all, id_battello)
 setkey(ricavi, id_battello)
 all=ricavi[all]
-
 all[var=='spcom' & ricavi>0 ,  parameter:=round(value/ricavi,3)  ]
 all[,ricavi:=NULL]
 rm(ricavi)
 #all[,value:=as.numeric(value)]
 
-# aggiungi labels per gestione outliers ####
+# gestisci valori iniziali di value e parameter, in accordo con la hist ####
 # value_or è il valore originiale scaricato da server
 # value_ok è il valore finale su cui si fa l'espansione. esso comprende le imputazioni dell'utente
 # value è il campo usato nelle visualizzazioni grafiche. è pari a value_orig (default) se "Keep outliers in your charts", mentre diventa pari a value_ok quando "Take a tour with imputations"
-all[,c('value_ok','value_or','is_ok','notes'):=list(value,value,0,"") ]
+all[,c('value_ok','value_or','parameter_ok','parameter_or','is_ok','notes'):=list(value,value,parameter,parameter,0,"") ]
 # importa da db lo storico delle modifiche
 hist=fread(pastedir(wd,"source/hist") )
 if(nrow(hist)>0){
   setkey(hist, id_battello,var)
   setkey(all, id_battello,var)
   all=hist[all]
-  all[!is.na(hist_value), (c('value_ok','notes','is_ok','hist_is_ok')):=list(hist_value,hist_notes,1,1)]  
+  all[!is.na(hist_value), (c('value_ok','parameter_ok','notes','is_ok','hist_is_ok')):=list(hist_value,hist_parameter,hist_notes,1,1)]
 }
-
