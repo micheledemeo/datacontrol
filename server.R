@@ -19,6 +19,19 @@ shinyServer(function(input, output, session) {
   output$codsis=renderUI({selectInput("codsis", label = "Apply a filter on gear type:", choices =codsis, selected = codsis, multiple = T ) })
   output$codlft=renderUI({ selectInput("codlft", label = "Apply a filter on LOA:", choices =codlft, selected = codlft, multiple = T ) })  
   output$strato=renderUI({ selectInput("strato", label = "Select the strata:", choices =strato, selected = NULL, multiple = T ) })
+  #UI for imputation:
+  output$var_imp=renderUI({  selectInput("var_imp", label = "Select the variables:", choices =var, selected = var, multiple = T ) })
+  output$codsis_imp=renderUI({selectInput("codsis_imp", label = "Apply a filter on gear type:", choices =codsis, selected = codsis, multiple = T ) })
+  output$codlft_imp=renderUI({ selectInput("codlft_imp", label = "Apply a filter on LOA:", choices =codlft, selected = codlft, multiple = T ) })  
+  output$strato_imp=renderUI({ selectInput("strato_imp", label = "Select the strata:", choices =strato, selected = NULL, multiple = T ) })  
+  
+  observe({ if (!is.null(input_codsis_imp()) | !is.null(input_codlft_imp())  ) updateSelectInput(session, "strato_imp", choices =strato, selected = NULL) })
+  observe({ 
+    if (!is.null(input_strato_imp()) ) {
+      updateSelectInput(session, "codsis_imp", choices =codsis, selected = NULL) 
+      updateSelectInput(session, "codlft_imp", choices =codlft, selected = NULL)
+    }
+  })
   
   observe({ if (!is.null(input_codsis()) | !is.null(input_codlft())  ) updateSelectInput(session, "strato", choices =strato, selected = NULL) })
   observe({ 
@@ -222,14 +235,20 @@ shinyServer(function(input, output, session) {
     filename = "not_sent.csv",
     content = function(file) write.table( not_sent(), file, sep=";",quote=F, na="",row.names = F)
   )
-  
+# imputation process ####  
 source( paste(getwd(), "source/imputation.R", sep="/"),loc=T )
 observe({  
-  if (input_freeze_data()=='yes') {
+  if (input_freeze_data()=='yes' & input_start_imputation()==1) {
     if (input_abs_or_mean_in_fix()=="abs-outliers") updateTabsetPanel(session, "headtab" ,selected = '1') else updateTabsetPanel(session, "headtab" ,selected = '2')
+    updateSelectInput(session, 'strato',selected = input_strato_imp() )
+    updateSelectInput(session, 'var',selected = input_var_imp() )
+    updateSelectInput(session, 'codsis',selected = input_codsis_imp() )
+    updateSelectInput(session, 'codlft',selected = input_codlft_imp() )
   } 
 })
 observe({ if (input_freeze_data()=='yes') all[,(c('value','parameter')):=list(value_ok,parameter_ok)] else all[,(c('value','parameter')):=list(value_or,parameter_or)] })
+observe({ if (input_start_imputation()==0) updateRadioButtons(session, 'freeze_data', selected = 'no') })
+
 
   output$table_outliers_value = renderDataTable({d_outliers_value()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,original_value=value_or,is_ok,final_value=ifelse(is_ok==1,value_ok,NA))]})
   output$table_outliers_parameter = renderDataTable({d_outliers_parameter()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,parameter,original_value=value_or,is_ok,final_value=ifelse(is_ok==1,value_ok,NA))]})
@@ -263,8 +282,7 @@ output$notes_on_fixing=renderText({
   
   })
 output$uti=renderText({input_freeze_data() })
-is_ok_tick=reactive({ if (input$headtab==1) 1 else 1 })
-output$upload_dt = renderDataTable({all[is_ok==is_ok_tick() ,.(id_rilevatore,var,id_strato,id_battello,is_ok,value_ok,value_or,value,parameter_ok,parameter_or,parameter,notes)]})
+output$upload_dt = renderDataTable({ upload_data() })
   
   
-})
+}) #shinyServer

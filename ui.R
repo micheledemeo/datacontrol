@@ -28,9 +28,29 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                         br()
                                         
                        ),
-                       conditionalPanel(condition="input.headtab == 8 & input.freeze_data=='no' ",
+                       conditionalPanel(condition="input.headtab== 8 & input.start_imputation==0",
+                                        uiOutput("var_imp"),
+                                        uiOutput("strato_imp"),
+                                        uiOutput("codsis_imp"),
+                                        uiOutput("codlft_imp")
+                       ),
+                       conditionalPanel(condition="(input.headtab <=6 | (input.headtab ==8 & input.start_imputation==0) ) & !(input.headtab == 6 && input.zero_or_not_sent == 62)", 
+                                        checkboxInput(inputId = "check_gio",label = "Days at sea > 0", value=F)
+                       ),
+                       conditionalPanel(condition="input.headtab == 3 || input.headtab == 4", 
+                                        checkboxInput(inputId = "apply_weights",label = "Apply weights", value=T)
+                       ),
+                       conditionalPanel(condition="( (input.headtab >= 1 & input.headtab <= 4) | (input.headtab ==8 & input.start_imputation==0) ) & input.check_gio==0", 
+                                        checkboxInput(inputId = "not_sent_as_0",label = "Not-sent as zero-values", value=F)
+                       ),                     
+                       conditionalPanel(condition="input.headtab== 8 & input.start_imputation==0",
                                         radioButtons("abs_or_mean_in_fix", label = "Choose if refer to abs-outliers or mean-outliers",
-                                                     choices = list("abs-outliers" = 'abs-outliers', "mean-outliers" = 'mean-outliers'), selected = 'abs-outliers'),
+                                                     choices = list("abs-outliers" = 'abs-outliers', "mean-outliers" = 'mean-outliers'), selected = 'abs-outliers')
+                                        ),
+                       conditionalPanel(condition="input.headtab== 8",
+                                        checkboxInput(inputId = "start_imputation",label = "START IMPUTATION ON APPLIED FILTERS", value=F)
+                       ),
+                       conditionalPanel(condition="input.headtab == 8 & input.start_imputation==1  & input.freeze_data=='no'",
                                         radioButtons("subset_units", label = "Choose if subset specific units",
                                                      choices = list("all units" = 'all', "subset units" = 'subset'), selected = 'all'),
                                         conditionalPanel(condition="input.subset_units == 'subset'",
@@ -46,18 +66,9 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                                          conditionalPanel(condition="input.imputation_method == 'hot-deck'",
                                                                           sliderInput("slider_hotdeck",label = NULL,min = 1,max=100,value=50)
                                                          )
-                                        )
+                                        )                                        
                        ),
-                       conditionalPanel(condition="input.headtab <=6 & !(input.headtab == 6 && input.zero_or_not_sent == 62)", 
-                                        checkboxInput(inputId = "check_gio",label = "Days at sea > 0", value=F)
-                       ),
-                       conditionalPanel(condition="input.headtab == 3 || input.headtab == 4", 
-                                        checkboxInput(inputId = "apply_weights",label = "Apply weights", value=T)
-                       ),
-                       conditionalPanel(condition="(input.headtab >= 1 & input.headtab <= 4) & input.check_gio==0", 
-                                        checkboxInput(inputId = "not_sent_as_0",label = "Not-sent as zero-values", value=F)
-                       ),
-                       conditionalPanel(condition="input.headtab == 8",
+                       conditionalPanel(condition="input.headtab == 8 & input.start_imputation==1 & input.keep_accept_refuse_outliers == 'refuse'",
                                         radioButtons("freeze_data", label = "Freeze data with imputations",
                                                      choices = list("Take a tour with imputations" = 'yes', "Keep outliers in your charts" = 'no'), selected = 'no')
                        ),
@@ -119,8 +130,8 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                               tabPanel("Strata level",dataTableOutput("table_consegne_strato"))
                                             )
                                    ),
-                                   tabPanel("Imputation process", value = 8,
-                                            dataTableOutput("outliers_in_imputation_dt")
+                                   tabPanel("Imputation process", value = 8,                                           
+                                              tabPanel("A",dataTableOutput("outliers_in_imputation_dt"),value = 'A' )    
                                    ),
                                    tabPanel("Upload", value = 9,
                                             dataTableOutput("upload_dt")

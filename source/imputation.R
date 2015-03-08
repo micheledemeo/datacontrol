@@ -1,6 +1,15 @@
 
-outliers_in_boxplot=reactive({
-  d_outliers= if(input$abs_or_mean_in_fix=='abs-outliers') d_panel()[,.(id_battello,var,var_for_outliers=value_or)] else d_panel()[,.(id_battello,var,var_for_outliers=parameter_or)]
+outliers_in_input=reactive({
+    
+  d_outliers=if (  !is.null( input_strato_imp() ) ) all[giorni_mare>(input_check_gio()-1) & id_strato %in% input_strato_imp() , .(id_battello,var,value_or,parameter_or,sent) ]
+  else if ( !is.null(input_codsis_imp()) &  is.null(input_codlft_imp()) )  all[giorni_mare>(input_check_gio()-1)  & codsis199 %in% input_codsis_imp(), .(id_battello,var,value_or,parameter_or,sent) ]
+  else if ( is.null(input_codsis_imp()) &  !is.null(input_codlft_imp()) )  all[giorni_mare>(input_check_gio()-1)  & codlft199 %in% input_codlft_imp(), .(id_battello,var,value_or,parameter_or,sent) ]
+  else if ( !is.null(input_codsis_imp()) &  !is.null(input_codlft_imp()) ) all[giorni_mare>(input_check_gio()-1)  & codsis199 %in% input_codsis_imp() & codlft199 %in% input_codlft_imp(), .(id_battello,var,value_or,parameter_or,sent) ]  
+  else all[0]
+  
+  d_outliers=d_outliers[ var %in% input_var_imp() ]  
+  if( input_not_sent_as_0()==0 ) d_outliers=d_outliers[sent==1]  
+  d_outliers= if(input$abs_or_mean_in_fix=='abs-outliers') d_outliers[,.(id_battello,var,var_for_outliers=value_or)] else d_outliers[,.(id_battello,var,var_for_outliers=parameter_or)]
   
   d_outliers2=d_outliers[,list( out_up=quantile(var_for_outliers,.75)+1.5*IQR(var_for_outliers), out_down=quantile(var_for_outliers,.25)-1.5*IQR(var_for_outliers) ),  keyby=.(var)]
   setkey(d_outliers, var )
@@ -10,14 +19,16 @@ outliers_in_boxplot=reactive({
   d_outliers 
   
 })
+
 output$outliers_id_battello_list_to_subset=renderUI({
-  unique_id=outliers_in_boxplot()[,unique(id_battello)]
-  unique_id=unique_id[order(unique_id)]
-  selectInput("outliers_id_battello_list_to_subset", choices =unique_id, selected=unique_id, multiple = T , label=NA)
+    unique_id=outliers_in_input()[,unique(id_battello)]
+    unique_id=unique_id[order(unique_id)]
+    selectInput("outliers_id_battello_list_to_subset", choices =unique_id, selected=unique_id, multiple = T , label=NA)
+  
 })
 
 outliers_in_imputation=reactive({
-  if ( input_subset_units()=='all' ) outliers_in_boxplot() else outliers_in_boxplot()[.(as.numeric(input_outliers_id_battello_list_to_subset()))]
+  if ( input_subset_units()=='all' ) outliers_in_input() else outliers_in_input()[.(as.numeric(input_outliers_id_battello_list_to_subset()))]
 })
 
 # genera dataset con le imputazioni da mettere in join con all ####
@@ -164,7 +175,7 @@ imputation_output=reactive({
 # render data table to show ####
 output$outliers_in_imputation_dt=renderDataTable({
   
-  if (input_keep_accept_refuse_outliers()=="keep" ) {
+  if (input_start_imputation()==0 ) {
     setkey(all, id_battello,var)
     all[outliers_in_imputation(), (c('value_ok','parameter_ok','notes','is_ok')):=
           list( ifelse(is.na(hist_value),value_or,hist_value),
@@ -173,40 +184,60 @@ output$outliers_in_imputation_dt=renderDataTable({
                 ifelse(is.na(hist_value),0,hist_is_ok)
           )
         ]
-  all[outliers_in_imputation() ,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,is_ok,imputation=hist_value,outlier=value_or,notes=hist_notes)]
-
+    all[outliers_in_imputation() ,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,is_ok,imputation=hist_value,outlier=value_or,notes=hist_notes)]
     
-  } else if (input_keep_accept_refuse_outliers()=="accept") { 
+  } else {
     
-    setkey(all, id_battello,var)
-    nts=paste(session_info, input_abs_or_mean_in_fix(), input_subset_units(), input_keep_accept_refuse_outliers(), sep="|")
-    all[outliers_in_imputation(), (c('value_ok','parameter_ok','notes','is_ok')):=list(value_or,parameter_or,nts,1)]
-    all[outliers_in_imputation(), .(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,is_ok,imputation=value_ok,imputation_parameter=parameter_ok,outlier=value_or,parameter_outlier=parameter_or,notes)]
-    
-  } else { # qui input_keep_accept_refuse_outliers()=="refuse" (start imputation)
-    nts=paste(session_info, input_abs_or_mean_in_fix(), input_subset_units(), input_keep_accept_refuse_outliers(), input_group_for_imputation_method(),input_imputation_method(), sep="|")
-    #imputation_output()
-    setkey(all, id_battello,var )
-    if(nrow(imputation_output())>0){
-      all[imputation_output(), (c('value_ok','parameter_ok','is_ok','notes')):=list(imputation_value,imputation_parameter,1L,nts )]
-      setkey(all, id_battello,var)
-      all[outliers_in_imputation(), .(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,is_ok,imputation=value_ok,imputation_parameter=parameter_ok,outlier=value_or,parameter_outlier=parameter_or,notes)]
-      
-    } else { #in questo caso non ci sono dati a sufficienza per stimare, quindi ripristino la soluzione scaricata
-      nts=paste("not enough data in the actual session:", nts)
+    if (input_keep_accept_refuse_outliers()=="keep" ) {
       setkey(all, id_battello,var)
       all[outliers_in_imputation(), (c('value_ok','parameter_ok','notes','is_ok')):=
             list( ifelse(is.na(hist_value),value_or,hist_value),
                   ifelse(is.na(hist_value),parameter_or,hist_parameter),
-                  nts,
+                  ifelse(is.na(hist_value),"",hist_notes),
                   ifelse(is.na(hist_value),0,hist_is_ok)
             )
           ]
+      all[outliers_in_imputation() ,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,is_ok,imputation=hist_value,outlier=value_or,notes=hist_notes)]
+      
+      
+    } else if (input_keep_accept_refuse_outliers()=="accept") { 
+      
+      setkey(all, id_battello,var)
+      nts=paste(session_info, input_abs_or_mean_in_fix(), input_subset_units(), input_keep_accept_refuse_outliers(), sep="|")
+      all[outliers_in_imputation(), (c('value_ok','parameter_ok','notes','is_ok')):=list(value_or,parameter_or,nts,1)]
       all[outliers_in_imputation(), .(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,is_ok,imputation=value_ok,imputation_parameter=parameter_ok,outlier=value_or,parameter_outlier=parameter_or,notes)]
+      
+    } else { # qui input_keep_accept_refuse_outliers()=="refuse" (start imputation)
+      nts=paste(session_info, input_abs_or_mean_in_fix(), input_subset_units(), input_keep_accept_refuse_outliers(), input_group_for_imputation_method(),input_imputation_method(), sep="|")
+      #imputation_output()
+      setkey(all, id_battello,var )
+      if(nrow(imputation_output())>0){
+        all[imputation_output(), (c('value_ok','parameter_ok','is_ok','notes')):=list(imputation_value,imputation_parameter,1L,nts )]
+        setkey(all, id_battello,var)
+        all[outliers_in_imputation(), .(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,is_ok,imputation=value_ok,imputation_parameter=parameter_ok,outlier=value_or,parameter_outlier=parameter_or,notes)]
+        
+      } else { #in questo caso non ci sono dati a sufficienza per stimare, quindi ripristino la soluzione scaricata
+        nts=paste("not enough data in the actual session:", nts)
+        setkey(all, id_battello,var)
+        all[outliers_in_imputation(), (c('value_ok','parameter_ok','notes','is_ok')):=
+              list( ifelse(is.na(hist_value),value_or,hist_value),
+                    ifelse(is.na(hist_value),parameter_or,hist_parameter),
+                    nts,
+                    ifelse(is.na(hist_value),0,hist_is_ok)
+              )
+            ]
+        all[outliers_in_imputation(), .(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,is_ok,imputation=value_ok,imputation_parameter=parameter_ok,outlier=value_or,parameter_outlier=parameter_or,notes)]
+      }
+      
     }
     
-  }
-  
-  
+  } # if (input_start_imputation()==0 )
+    
 })
+
+
+upload_data=reactive({
+  input$headtab # con questo forzo il refresh alla variazione del tab attivo
+  all[is_ok==1 & grepl(session_info, notes,fixed = T) ,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,value_ok,value_or,notes)]
+  })
 
