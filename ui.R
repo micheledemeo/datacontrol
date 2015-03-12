@@ -11,10 +11,9 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                    br(),
                    
                    sidebarLayout(
-                     
                      sidebarPanel(
-                       
-                       actionButton("refresh", "Refresh data from remote server") ,br(), br(), #uiOutput("str_in_wat") ,
+                       #conditionalPanel(condition="input.headtab!=9",actionButton("refresh", label = "Refresh data from remote server" )),br(), br(),
+                       conditionalPanel(condition="input.headtab==9",checkboxInput("upload_button", "UPLOAD OF IMPUTATION", value=F)),
                        conditionalPanel(condition="input.headtab == 1 || input.headtab == 2 || (input.headtab == 6 && input.zero_or_not_sent == 61)", uiOutput("var"), br(), br() ),
                        conditionalPanel(condition="(input.headtab >= 1 && input.headtab <= 4) || (input.headtab == 6 && input.zero_or_not_sent == 61)",
                                         uiOutput("codsis"),
@@ -45,17 +44,17 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                        ),                     
                        conditionalPanel(condition="input.headtab== 8 & input.start_imputation==0",
                                         radioButtons("abs_or_mean_in_fix", label = "Choose if refer to abs-outliers or mean-outliers",
-                                                     choices = list("abs-outliers" = 'abs-outliers', "mean-outliers" = 'mean-outliers'), selected = 'abs-outliers')
+                                                     choices = list("abs-outliers" = 'abs-outliers', "mean-outliers" = 'mean-outliers'), selected = 'abs-outliers'),
+                                        radioButtons("subset_units", label = "Choose if subset specific units",
+                                                     choices = list("all units" = 'all', "subset units" = 'subset'), selected = 'all'),
+                                        conditionalPanel(condition="input.subset_units == 'subset'",
+                                                         uiOutput("outliers_id_battello_list_to_subset")
+                                        )
                                         ),
                        conditionalPanel(condition="input.headtab== 8",
                                         checkboxInput(inputId = "start_imputation",label = "START IMPUTATION ON APPLIED FILTERS", value=F)
                        ),
                        conditionalPanel(condition="input.headtab == 8 & input.start_imputation==1  & input.freeze_data=='no'",
-                                        radioButtons("subset_units", label = "Choose if subset specific units",
-                                                     choices = list("all units" = 'all', "subset units" = 'subset'), selected = 'all'),
-                                        conditionalPanel(condition="input.subset_units == 'subset'",
-                                                         uiOutput("outliers_id_battello_list_to_subset")
-                                        ),
                                         radioButtons("keep_accept_refuse_outliers", label = "Choose if accept outliers",
                                                      choices = list("keep the data from the server"='keep',"accept outliers as ok-values" = "accept", "start imputation" = "refuse"), selected = "keep"),
                                         conditionalPanel(condition="input.keep_accept_refuse_outliers == 'refuse'",

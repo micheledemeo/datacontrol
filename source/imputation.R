@@ -20,7 +20,7 @@ outliers_in_input=reactive({
   
 })
 
-output$outliers_id_battello_list_to_subset=renderUI({
+output$outliers_id_battello_list_to_subset=renderUI({ 
     unique_id=outliers_in_input()[,unique(id_battello)]
     unique_id=unique_id[order(unique_id)]
     selectInput("outliers_id_battello_list_to_subset", choices =unique_id, selected=unique_id, multiple = T , label=NA)
@@ -32,7 +32,7 @@ outliers_in_imputation=reactive({
 })
 
 # genera dataset con le imputazioni da mettere in join con all ####
-data_for_imputation=reactive({
+data_for_imputation=reactive({ 
   # define dataset in imputation ####
   setkey(all, id_battello,var)
   in_imputation=all[outliers_in_imputation(),.N,keyby=list(var,codsis199,codlft199,id_strato)][,N:=NULL]
@@ -78,7 +78,7 @@ data_for_imputation=reactive({
 
 
 # fit the model ####
-imputation_output=reactive({
+imputation_output=reactive({ 
   
   key_vec=setdiff( names(data_for_imputation()) , c("id_battello", "value_or") )
   setkey(all, id_battello,var)
@@ -234,10 +234,3 @@ output$outliers_in_imputation_dt=renderDataTable({
   } # if (input_start_imputation()==0 )
     
 })
-
-
-upload_data=reactive({
-  input$headtab # con questo forzo il refresh alla variazione del tab attivo
-  all[is_ok==1 & grepl(session_info, notes,fixed = T) ,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,value_ok,value_or,notes)]
-  })
-

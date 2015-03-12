@@ -6,15 +6,9 @@
 
 shinyServer(function(input, output, session) {
   
-  # defining function ####
-  source( paste(getwd(), "source/ini_fun.R", sep="/"),loc=T )
-  
   # data import from mysql with a fake progress bar ####
-  source( paste(getwd(), "source/refresh_data.R", sep="/"),loc=T )  
-  
-  # refresh data with an action button
-  observe({ if (input$refresh > 0) source( paste(getwd(), "source/refresh_data.R", sep="/"),loc=T )  })
-  
+  source( paste(getwd(), "source/data_download.R", sep="/"),loc=T )  
+    
   output$var=renderUI({  selectInput("var", label = "Select the variables:", choices =var, selected = var, multiple = T ) })
   output$codsis=renderUI({selectInput("codsis", label = "Apply a filter on gear type:", choices =codsis, selected = codsis, multiple = T ) })
   output$codlft=renderUI({ selectInput("codlft", label = "Apply a filter on LOA:", choices =codlft, selected = codlft, multiple = T ) })  
@@ -23,7 +17,7 @@ shinyServer(function(input, output, session) {
   output$var_imp=renderUI({  selectInput("var_imp", label = "Select the variables:", choices =var, selected = var, multiple = T ) })
   output$codsis_imp=renderUI({selectInput("codsis_imp", label = "Apply a filter on gear type:", choices =codsis, selected = codsis, multiple = T ) })
   output$codlft_imp=renderUI({ selectInput("codlft_imp", label = "Apply a filter on LOA:", choices =codlft, selected = codlft, multiple = T ) })  
-  output$strato_imp=renderUI({ selectInput("strato_imp", label = "Select the strata:", choices =strato, selected = NULL, multiple = T ) })  
+  output$strato_imp=renderUI({ selectInput("strato_imp", label = "Select the strata:", choices =strato, selected = NULL, multiple = T ) })   
   
   observe({ if (!is.null(input_codsis_imp()) | !is.null(input_codlft_imp())  ) updateSelectInput(session, "strato_imp", choices =strato, selected = NULL) })
   observe({ 
@@ -235,8 +229,14 @@ shinyServer(function(input, output, session) {
     filename = "not_sent.csv",
     content = function(file) write.table( not_sent(), file, sep=";",quote=F, na="",row.names = F)
   )
-# imputation process ####  
+# imputation and upload process #####
 source( paste(getwd(), "source/imputation.R", sep="/"),loc=T )
+observe({ if (input_freeze_data()=='yes') all[,(c('value','parameter')):=list(value_ok,parameter_ok)] else all[,(c('value','parameter')):=list(value_or,parameter_or)] })
+observe({ if (input_start_imputation()==0) updateRadioButtons(session, 'freeze_data', selected = 'no') })
+upload_data=reactive({
+  input$headtab # con questo forzo il refresh alla variazione del tab attivo, così in upload tab ho sempre una visualizzazioe aggiornata
+  all[is_ok==1 & grepl(session_info, notes,fixed = T) ,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,value_ok,value_or,parameter_ok,notes)]
+})
 observe({  
   if (input_freeze_data()=='yes' & input_start_imputation()==1) {
     if (input_abs_or_mean_in_fix()=="abs-outliers") updateTabsetPanel(session, "headtab" ,selected = '1') else updateTabsetPanel(session, "headtab" ,selected = '2')
@@ -246,12 +246,32 @@ observe({
     updateSelectInput(session, 'codlft',selected = input_codlft_imp() )
   } 
 })
-observe({ if (input_freeze_data()=='yes') all[,(c('value','parameter')):=list(value_ok,parameter_ok)] else all[,(c('value','parameter')):=list(value_or,parameter_or)] })
-observe({ if (input_start_imputation()==0) updateRadioButtons(session, 'freeze_data', selected = 'no') })
+# data upload with button ####
+observe({ 
+  if (nrow(upload_data())>0 & input$upload_button==T) {
+    withProgress(message = "Uploadig data to remote server:",{
+      n=20
+      csv=upload_data()[,list(id_battello,var,hist_value=value_ok,hist_parameter=parameter_ok,hist_notes=notes)]
+      write.table(csv, paste(getwd(),"source/hist",sep="/"), sep=";", quote = FALSE, na = "", row.names = F)
+      pid=data.table(system("tasklist /V",intern = T))[grepl("127.0.0.1:12345",V1),V1]
+      pid=regmatches(pid, regexpr("\\d+(?=\\s*Console)",pid,perl=T))
+      for (i in 1:n) {
+        incProgress(1/n, detail =  sample(9000:70000,1) )
+        Sys.sleep(.1)
+      }
+    }) # withProgress     
+    system(paste("taskkill /pid",pid))
+    browseURL("http://127.0.0.1:12345/")
+  }
+  
+})
+observe ({ input$headtab
+           updateCheckboxInput(session, 'upload_button', value = F)  
+})
 
-
+# objects to show in output ####
   output$table_outliers_value = renderDataTable({d_outliers_value()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,original_value=value_or,is_ok,final_value=ifelse(is_ok==1,value_ok,NA))]})
-  output$table_outliers_parameter = renderDataTable({d_outliers_parameter()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,parameter,original_value=value_or,is_ok,final_value=ifelse(is_ok==1,value_ok,NA))]})
+  output$table_outliers_parameter = renderDataTable({ d_outliers_parameter()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,parameter,original_value=value_or,is_ok,final_value=ifelse(is_ok==1,value_ok,NA))]})
   output$pie_data = renderDataTable({d_pie()[,1:(ncol(d_pie() ) -1), with=F ] })
   output$table_free_filters=renderDataTable({  all[giorni_mare>(input_check_gio()-1) ] })
   output$table_consegne_ril=renderDataTable({bat_ril})
@@ -281,8 +301,7 @@ output$notes_on_fixing=renderText({
     out
   
   })
-output$uti=renderText({input_freeze_data() })
-output$upload_dt = renderDataTable({ upload_data() })
+output$upload_dt = renderDataTable({ upload_data()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,imputation_value=value_ok,original_value=value_or,notes)] })
   
   
 }) #shinyServer

@@ -1,5 +1,5 @@
 # inizialization for wd and ibraries
-session_info=paste(Sys.info()['nodename'], Sys.info()['user'], strftime(Sys.time(),"%Y%m%d%H%M"), sep="|")
+session_info=paste(Sys.info()['nodename'], Sys.info()['user'], strftime(Sys.time(),"%Y-%m-%d-%X"), sep="|")
 require(shiny)
 require(data.table)
 require(reshape2)
