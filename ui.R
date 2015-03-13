@@ -12,8 +12,12 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                    
                    sidebarLayout(
                      sidebarPanel(
-                       #conditionalPanel(condition="input.headtab!=9",actionButton("refresh", label = "Refresh data from remote server" )),br(), br(),
                        conditionalPanel(condition="input.headtab==9",checkboxInput("upload_button", "UPLOAD OF IMPUTATION", value=F)),
+                       conditionalPanel(condition="input.headtab >= 1 && input.headtab <= 4",
+#                                         checkboxInput("data_type", "Show graphs with imputations", value=F)
+                                        radioButtons("show_output", label = 'Choose if:',
+                                                     choices = list("Show output with original data" = 'orig_data', 'Show output with imputations' = 'imput_data'), selected = 'orig_data')
+                        ),
                        conditionalPanel(condition="input.headtab == 1 || input.headtab == 2 || (input.headtab == 6 && input.zero_or_not_sent == 61)", uiOutput("var"), br(), br() ),
                        conditionalPanel(condition="(input.headtab >= 1 && input.headtab <= 4) || (input.headtab == 6 && input.zero_or_not_sent == 61)",
                                         uiOutput("codsis"),
@@ -55,7 +59,7 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                         checkboxInput(inputId = "start_imputation",label = "START IMPUTATION ON APPLIED FILTERS", value=F)
                        ),
                        conditionalPanel(condition="input.headtab == 8 & input.start_imputation==1  & input.freeze_data=='no'",
-                                        radioButtons("keep_accept_refuse_outliers", label = "Choose if accept outliers",
+                                        radioButtons("keep_accept_refuse_outliers", label = "Choose if accept:",
                                                      choices = list("keep the data from the server"='keep',"accept outliers as ok-values" = "accept", "start imputation" = "refuse"), selected = "keep"),
                                         conditionalPanel(condition="input.keep_accept_refuse_outliers == 'refuse'",
                                                          radioButtons("group_for_imputation_method", label = "Choose how to group units to build the model",

@@ -1,8 +1,8 @@
 # runapp: ####
 # library(shiny)
-# runApp("C:/Users/mdemeo/Documents/000/datacontrol",port = 12345)
-# options(shiny.trace=T)
-
+# runApp("C:/Users/mdemeo/Documents/000/datacontrol",port = 12345,quiet = T)
+#options(shiny.trace=T)
+#sink( "C:/Users/mdemeo/Documents/000/datacontrol/log.log" )
 
 shinyServer(function(input, output, session) {
   
@@ -60,6 +60,7 @@ shinyServer(function(input, output, session) {
   d_panel=reactive({ 
     
    input_freeze_data()
+   if (input_show_output()=='orig_data') all[,(c('value','parameter')):=list(value_or,parameter_or)] else all[,(c('value','parameter')):=list(value_ok,parameter_ok)]
     
     d_panel=if (  !is.null( input_strato() ) ) all[giorni_mare>(input_check_gio()-1) & id_strato %in% input_strato() ]
     else if ( !is.null(input_codsis()) &  is.null(input_codlft()) )  all[giorni_mare>(input_check_gio()-1)  & codsis199 %in% input_codsis()]
@@ -132,9 +133,7 @@ shinyServer(function(input, output, session) {
   )
   
   d_outliers_parameter=reactive({
-    
-   #if (input_freeze_data()=='yes') all[,(c('value','parameter')):=list(value_ok,parameter_ok)] else all[,(c('value','parameter')):=list(value_or,parameter_or)]
-    
+        
     d_outliers=d_panel()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,value,is_ok,value_ok,parameter,value_or)]
     d_outliers2=d_outliers[,list( out_up=quantile(parameter,.75)+1.5*IQR(parameter), out_down=quantile(parameter,.25)-1.5*IQR(parameter) ),  keyby=.(var)]
     setkey(d_outliers, var )
@@ -216,7 +215,7 @@ shinyServer(function(input, output, session) {
     d_waterfall_loa()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~codlft199,scales = "free", ncol=2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) ]
   })
   
-  # genera dataset da esportare in "At sample level" tabset ####
+  # genera dataset da esportare in "Checks on zero values" tabset ####
   zero_checks=reactive({ d_panel()[value==0 & sent==1 , setdiff(names(d_panel()),c('sent','parameter','pr_i')), with=F ] })
   not_sent=reactive({ all[sent==0 , .N ,list(id_battello,numero_ue,id_rilevatore,id_strato,regione,codsis199,codlft199,gsa,descrizione) ][,N:=NULL] })  
   output$zero_checks_dt = renderDataTable({ zero_checks() })
@@ -302,6 +301,6 @@ output$notes_on_fixing=renderText({
   
   })
 output$upload_dt = renderDataTable({ upload_data()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,imputation_value=value_ok,original_value=value_or,notes)] })
-  
+#output$uti=renderText({ input_data_type() })  
   
 }) #shinyServer
