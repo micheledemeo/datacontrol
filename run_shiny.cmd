@@ -1,1 +1,0 @@
-"C:\Program Files\R\R-3.1.1\bin\x64\R.exe" -e "shiny::runApp('C:/Users/mdemeo/Documents/000/datacontrol', port = 12345, launch.browser=TRUE)"
