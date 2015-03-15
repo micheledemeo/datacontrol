@@ -237,8 +237,9 @@ upload_data=reactive({
   all[is_ok==1 & grepl(session_info, notes,fixed = T) ,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,value_ok,value_or,parameter_ok,notes)]
 })
 observe({  
-  if (input_freeze_data()=='yes' & input_start_imputation()==1) {
+  if (input_freeze_data()=='yes' & input_start_imputation()==1) {    
     if (input_abs_or_mean_in_fix()=="abs-outliers") updateTabsetPanel(session, "headtab" ,selected = '1') else updateTabsetPanel(session, "headtab" ,selected = '2')
+    updateCheckboxGroupInput(session,'show_output',selected = 'imput_data')
     updateSelectInput(session, 'strato',selected = input_strato_imp() )
     updateSelectInput(session, 'var',selected = input_var_imp() )
     updateSelectInput(session, 'codsis',selected = input_codsis_imp() )
@@ -264,9 +265,13 @@ observe({
   }
   
 })
-observe ({ input$headtab
-           updateCheckboxInput(session, 'upload_button', value = F)  
+observe ({ 
+  input$headtab
+  updateCheckboxInput(session, 'upload_button', value = F)
+  if (input_show_output()=='orig_data' & input_start_imputation()==1) updateCheckboxGroupInput(session,'freeze_data',selected = 'no')
 })
+
+
 
 # objects to show in output ####
   output$table_outliers_value = renderDataTable({d_outliers_value()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,original_value=value_or,is_ok,final_value=ifelse(is_ok==1,value_ok,NA))]})
