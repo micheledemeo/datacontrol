@@ -41,35 +41,45 @@ data_for_imputation=reactive({
   if (input_group_for_imputation_method()=='strata') {
     setkey(all, var, id_strato)
     in_imputation_temp=in_imputation[,.N,keyby=list(var,id_strato)]
-    imputation_output=all[in_imputation_temp, nomatch=0,][sent==1, list(id_battello,id_strato,var,value_or)]
+    imputation_output=all[in_imputation_temp, nomatch=0,][sent==1, list(id_battello,id_strato,var,value_or,value_ok,is_ok)]
+    if(input_discard_imputations()==1) imputation_output=imputation_output[ !(is_ok==1 & round(value_ok-value_or,0)!=0) ]
+    imputation_output=imputation_output[,list(id_battello,id_strato,var,value_or)]
     imputation_output[,c('out_up','out_down'):=list( quantile(value_or,.75)+1.5*IQR(value_or), quantile(value_or,.25)-1.5*IQR(value_or) ),  keyby=c('var','id_strato')]
     imputation_output[value_or>=out_down & value_or<=out_up, list(id_battello,var,id_strato,value_or)]
     
   } else if (input_group_for_imputation_method()=='gear') {
     setkey(all, var, codsis199)
     in_imputation_temp=in_imputation[,.N,keyby=list(var,codsis199)]
-    imputation_output=all[in_imputation_temp, nomatch=0,][sent==1, list(id_battello,codsis199,var,value_or)]
+    imputation_output=all[in_imputation_temp, nomatch=0,][sent==1, list(id_battello,codsis199,var,value_or,value_ok,is_ok)]
+    if(input_discard_imputations()==1) imputation_output=imputation_output[ !(is_ok==1 & round(value_ok-value_or,0)!=0) ]
+    imputation_output=imputation_output[,list(id_battello,codsis199,var,value_or)]
     imputation_output[,c('out_up','out_down'):=list( quantile(value_or,.75)+1.5*IQR(value_or), quantile(value_or,.25)-1.5*IQR(value_or) ),  keyby=c('var','codsis199')]
     imputation_output[value_or>=out_down & value_or<=out_up, list(id_battello,var,codsis199,value_or)]
     
   } else if (input_group_for_imputation_method()=='loa') {
     setkey(all, var, codlft199)
     in_imputation_temp=in_imputation[,.N,keyby=list(var,codlft199)]
-    imputation_output=all[in_imputation_temp, nomatch=0,][sent==1, list(id_battello,codlft199,var,value_or)]
+    imputation_output=all[in_imputation_temp, nomatch=0,][sent==1, list(id_battello,codlft199,var,value_or,value_ok,is_ok)]
+    if(input_discard_imputations()==1) imputation_output=imputation_output[ !(is_ok==1 & round(value_ok-value_or,0)!=0) ]
+    imputation_output=imputation_output[,list(id_battello,codlft199,var,value_or)]
     imputation_output[,c('out_up','out_down'):=list( quantile(value_or,.75)+1.5*IQR(value_or), quantile(value_or,.25)-1.5*IQR(value_or) ),  keyby=c('var','codlft199')]
     imputation_output[value_or>=out_down & value_or<=out_up, list(id_battello,var,codlft199,value_or)]
     
   } else if (input_group_for_imputation_method()=='gear_loa') {
     setkey(all, var, codlft199,codsis199)
     in_imputation_temp=in_imputation[,.N,keyby=list(var,codlft199,codsis199)]
-    imputation_output=all[in_imputation_temp, nomatch=0,][sent==1, list(id_battello,codlft199,codsis199,var,value_or)]
+    imputation_output=all[in_imputation_temp, nomatch=0,][sent==1, list(id_battello,codlft199,codsis199,var,value_or,value_ok,is_ok)]
+    if(input_discard_imputations()==1) imputation_output=imputation_output[ !(is_ok==1 & round(value_ok-value_or,0)!=0) ]
+    imputation_output=imputation_output[,list(id_battello,codlft199,codsis199,var,value_or)]
     imputation_output[,c('out_up','out_down'):=list( quantile(value_or,.75)+1.5*IQR(value_or), quantile(value_or,.25)-1.5*IQR(value_or) ),  keyby=c('var','codlft199','codsis199')]
     imputation_output[value_or>=out_down & value_or<=out_up, list(id_battello,var,codlft199,codsis199,value_or)]
     
   } else {
     setkey(all, var)
     in_imputation_temp=in_imputation[,.N,keyby=list(var)]
-    imputation_output=all[in_imputation_temp, nomatch=0,][sent==1, list(id_battello,var,value_or)]
+    imputation_output=all[in_imputation_temp, nomatch=0,][sent==1, list(id_battello,var,value_or,value_ok,is_ok)]
+    if(input_discard_imputations()==1) imputation_output=imputation_output[ !(is_ok==1 & round(value_ok-value_or,0)!=0) ]
+    imputation_output=imputation_output[,list(id_battello,var,value_or)]
     imputation_output[,c('out_up','out_down'):=list( quantile(value_or,.75)+1.5*IQR(value_or), quantile(value_or,.25)-1.5*IQR(value_or) ),  keyby=c('var')]
     imputation_output[value_or>=out_down & value_or<=out_up, list(id_battello,var,value_or)]
     
@@ -203,12 +213,12 @@ output$outliers_in_imputation_dt=renderDataTable({
     } else if (input_keep_accept_refuse_outliers()=="accept") { 
       
       setkey(all, id_battello,var)
-      nts=paste(session_info, input_abs_or_mean_in_fix(), input_subset_units(), input_keep_accept_refuse_outliers(), sep="|")
+      nts=paste(session_info, input_abs_or_mean_in_fix(), input_discard_imputations(), input_subset_units(), input_keep_accept_refuse_outliers(), sep="|")
       all[outliers_in_imputation(), (c('value_ok','parameter_ok','notes','is_ok')):=list(value_or,parameter_or,nts,1)]
       all[outliers_in_imputation(), .(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,is_ok,imputation=value_ok,imputation_parameter=parameter_ok,outlier=value_or,parameter_outlier=parameter_or,notes)]
       
     } else { # qui input_keep_accept_refuse_outliers()=="refuse" (start imputation)
-      nts=paste(session_info, input_abs_or_mean_in_fix(), input_subset_units(), input_keep_accept_refuse_outliers(), input_group_for_imputation_method(),input_imputation_method(), sep="|")
+      nts=paste(session_info, input_abs_or_mean_in_fix(), input_discard_imputations(),  input_subset_units(), input_keep_accept_refuse_outliers(), input_group_for_imputation_method(),input_imputation_method(), sep="|")
       #imputation_output()
       setkey(all, id_battello,var )
       if(nrow(imputation_output())>0){
