@@ -26,9 +26,15 @@ withProgress(message = "Loading data from local db:",
 
 
 var=all[,unique(var)]
-strato=all[,unique(id_strato)]
+var=var[order(var)]
+strato_dt=all[,.N,keyby=.(descrizione,id_strato)]
+strato=strato_dt[,id_strato]
+strato=as.list(strato)
+names(strato)=strato_dt[,paste(descrizione,id_strato,sep="|@")]
 codsis=all[,unique(codsis199)]
+codsis=codsis[order(codsis)]
 codlft=all[,unique(codlft199)]
+codlft=codlft[order(codlft)]
 str_sis_lft=all[,.N,by=list(id_strato,codsis199,codlft199)][,N:=NULL]
 
 input_show_output=reactive({ input$show_output  })
