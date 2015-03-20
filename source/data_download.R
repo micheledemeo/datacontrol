@@ -4,7 +4,7 @@ source( paste(getwd(), "source/ini_fun.R", sep="/"),loc=T )
 withProgress(message = "Download from remote server:",
 {
   n=20
-  #system2("C:/nisea/batch/AggiornamentoDB.bat")
+  if( !system(paste("ping -n 1 www.google.com")) &  !file.exists(paste(getwd(),"source/stopdownload.uti",sep="/")) )  system2("C:/nisea/batch/AggiornamentoDB.bat")
 
   for (i in 1:n) {
     incProgress(1/n, detail =  sample(9000:70000,1) )
