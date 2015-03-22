@@ -52,7 +52,7 @@ all[,gsa:=as.character(gsa)]
 all[is.na(regione), (c('regione','codsis199', 'codlft199', 'gsa', 'descrizione')):=list("UNKNOWN")]
 
 # importa dati per yoy in waterfall ####
-yoy=fread(pastedir(wd,"source/yoy"),select = c('id_strato','carbur','alcova','spcom','alcofi','spmanu','lavoro','prolor','ricavi') ) 
+yoy=fread(pastedir(wd,"source/yoy"),select = c('id_strato','carbur','alcova','spcom','alcofi','spmanu','lavoro','proflor','ricavi') ) 
 yoy=melt(yoy,id.vars = 1, measure.vars = (2:ncol(yoy)), variable.factor = F,variable.name = "var", value.name = "yoy_value")
 setkey(yoy, id_strato)
 yoy=s[yoy][,descrizione:=NULL]

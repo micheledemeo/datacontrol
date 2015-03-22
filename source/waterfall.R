@@ -38,7 +38,7 @@ d_waterfall_italy=reactive({
     move_rect=waterfall[var=='ricavi',value/10]
     waterfall[,(c('end','start')):= list( end+move_rect , start+move_rect) ]
     setkey(waterfall, o)
-    
+
     waterfall
 
   }
