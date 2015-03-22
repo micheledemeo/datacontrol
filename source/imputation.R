@@ -1,11 +1,12 @@
 
 outliers_in_input=reactive({
-    
-  d_outliers=if (  !is.null( input_strato_imp() ) ) all[giorni_mare>(input_check_gio()-1) & id_strato %in% input_strato_imp() , .(id_battello,var,value_or,parameter_or,sent) ]
-  else if ( !is.null(input_codsis_imp()) &  is.null(input_codlft_imp()) )  all[giorni_mare>(input_check_gio()-1)  & codsis199 %in% input_codsis_imp(), .(id_battello,var,value_or,parameter_or,sent) ]
-  else if ( is.null(input_codsis_imp()) &  !is.null(input_codlft_imp()) )  all[giorni_mare>(input_check_gio()-1)  & codlft199 %in% input_codlft_imp(), .(id_battello,var,value_or,parameter_or,sent) ]
-  else if ( !is.null(input_codsis_imp()) &  !is.null(input_codlft_imp()) ) all[giorni_mare>(input_check_gio()-1)  & codsis199 %in% input_codsis_imp() & codlft199 %in% input_codlft_imp(), .(id_battello,var,value_or,parameter_or,sent) ]  
+  
+  d_outliers=if (  !is.null( input_strato_imp() ) ) all[giorni_mare>(input_check_gio()-1) & id_strato %in% input_strato_imp() , .(id_battello,var,value_or,parameter_or,sent,is_ok,session_info,notes) ]
+  else if ( !is.null(input_codsis_imp()) &  is.null(input_codlft_imp()) )  all[giorni_mare>(input_check_gio()-1)  & codsis199 %in% input_codsis_imp(), .(id_battello,var,value_or,parameter_or,sent,is_ok,session_info,notes) ]
+  else if ( is.null(input_codsis_imp()) &  !is.null(input_codlft_imp()) )  all[giorni_mare>(input_check_gio()-1)  & codlft199 %in% input_codlft_imp(), .(id_battello,var,value_or,parameter_or,sent,is_ok,session_info,notes) ]
+  else if ( !is.null(input_codsis_imp()) &  !is.null(input_codlft_imp()) ) all[giorni_mare>(input_check_gio()-1)  & codsis199 %in% input_codsis_imp() & codlft199 %in% input_codlft_imp(), .(id_battello,var,value_or,parameter_or,sent,is_ok,session_info,notes) ]  
   else all[0]
+  if(input_discard_imputations()==1) d_outliers=d_outliers[ !(is_ok==1 & !grepl(session_info, notes,fixed = T)), .(id_battello,var,value_or,parameter_or,sent) ]
   
   d_outliers=d_outliers[ var %in% input_var_imp() ]  
   if( input_not_sent_as_0()==0 ) d_outliers=d_outliers[sent==1]  
@@ -41,8 +42,7 @@ data_for_imputation=reactive({
   if (input_group_for_imputation_method()=='strata') {
     setkey(all, var, id_strato)
     in_imputation_temp=in_imputation[,.N,keyby=list(var,id_strato)]
-    imputation_output=all[in_imputation_temp, nomatch=0,][sent==1, list(id_battello,id_strato,var,value_or,value_ok,is_ok)]
-    if(input_discard_imputations()==1) imputation_output=imputation_output[ !(is_ok==1 & round(value_ok-value_or,0)!=0) ]
+    imputation_output=all[in_imputation_temp, nomatch=0,][sent==1, list(id_battello,id_strato,var,value_or,value_ok,is_ok)]    
     imputation_output=imputation_output[,list(id_battello,id_strato,var,value_or)]
     imputation_output[,c('out_up','out_down'):=list( quantile(value_or,.75)+1.5*IQR(value_or), quantile(value_or,.25)-1.5*IQR(value_or) ),  keyby=c('var','id_strato')]
     imputation_output[value_or>=out_down & value_or<=out_up, list(id_battello,var,id_strato,value_or)]
@@ -51,7 +51,6 @@ data_for_imputation=reactive({
     setkey(all, var, codsis199)
     in_imputation_temp=in_imputation[,.N,keyby=list(var,codsis199)]
     imputation_output=all[in_imputation_temp, nomatch=0,][sent==1, list(id_battello,codsis199,var,value_or,value_ok,is_ok)]
-    if(input_discard_imputations()==1) imputation_output=imputation_output[ !(is_ok==1 & round(value_ok-value_or,0)!=0) ]
     imputation_output=imputation_output[,list(id_battello,codsis199,var,value_or)]
     imputation_output[,c('out_up','out_down'):=list( quantile(value_or,.75)+1.5*IQR(value_or), quantile(value_or,.25)-1.5*IQR(value_or) ),  keyby=c('var','codsis199')]
     imputation_output[value_or>=out_down & value_or<=out_up, list(id_battello,var,codsis199,value_or)]
@@ -60,7 +59,6 @@ data_for_imputation=reactive({
     setkey(all, var, codlft199)
     in_imputation_temp=in_imputation[,.N,keyby=list(var,codlft199)]
     imputation_output=all[in_imputation_temp, nomatch=0,][sent==1, list(id_battello,codlft199,var,value_or,value_ok,is_ok)]
-    if(input_discard_imputations()==1) imputation_output=imputation_output[ !(is_ok==1 & round(value_ok-value_or,0)!=0) ]
     imputation_output=imputation_output[,list(id_battello,codlft199,var,value_or)]
     imputation_output[,c('out_up','out_down'):=list( quantile(value_or,.75)+1.5*IQR(value_or), quantile(value_or,.25)-1.5*IQR(value_or) ),  keyby=c('var','codlft199')]
     imputation_output[value_or>=out_down & value_or<=out_up, list(id_battello,var,codlft199,value_or)]
@@ -69,7 +67,6 @@ data_for_imputation=reactive({
     setkey(all, var, codlft199,codsis199)
     in_imputation_temp=in_imputation[,.N,keyby=list(var,codlft199,codsis199)]
     imputation_output=all[in_imputation_temp, nomatch=0,][sent==1, list(id_battello,codlft199,codsis199,var,value_or,value_ok,is_ok)]
-    if(input_discard_imputations()==1) imputation_output=imputation_output[ !(is_ok==1 & round(value_ok-value_or,0)!=0) ]
     imputation_output=imputation_output[,list(id_battello,codlft199,codsis199,var,value_or)]
     imputation_output[,c('out_up','out_down'):=list( quantile(value_or,.75)+1.5*IQR(value_or), quantile(value_or,.25)-1.5*IQR(value_or) ),  keyby=c('var','codlft199','codsis199')]
     imputation_output[value_or>=out_down & value_or<=out_up, list(id_battello,var,codlft199,codsis199,value_or)]
@@ -78,7 +75,6 @@ data_for_imputation=reactive({
     setkey(all, var)
     in_imputation_temp=in_imputation[,.N,keyby=list(var)]
     imputation_output=all[in_imputation_temp, nomatch=0,][sent==1, list(id_battello,var,value_or,value_ok,is_ok)]
-    if(input_discard_imputations()==1) imputation_output=imputation_output[ !(is_ok==1 & round(value_ok-value_or,0)!=0) ]
     imputation_output=imputation_output[,list(id_battello,var,value_or)]
     imputation_output[,c('out_up','out_down'):=list( quantile(value_or,.75)+1.5*IQR(value_or), quantile(value_or,.25)-1.5*IQR(value_or) ),  keyby=c('var')]
     imputation_output[value_or>=out_down & value_or<=out_up, list(id_battello,var,value_or)]
