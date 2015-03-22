@@ -54,7 +54,7 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                         conditionalPanel(condition="input.subset_units == 'subset'",
                                                          uiOutput("outliers_id_battello_list_to_subset")
                                         ),
-                                        checkboxInput("discard_imputations", "Discard existing imputations (of previous sessions)", value=F)
+                                        checkboxInput("keep_imputations", "Keep existing imputations (of previous sessions)", value=F)
                                         ),
                        conditionalPanel(condition="input.headtab== 8",
                                         checkboxInput(inputId = "start_imputation",label = "START IMPUTATION ON APPLIED FILTERS", value=F)
@@ -63,6 +63,7 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                         radioButtons("keep_accept_refuse_outliers", label = "Choose if accept:",
                                                      choices = list("keep the data from the server"='keep',"accept outliers as ok-values" = "accept", "start imputation" = "refuse"), selected = "keep"),
                                         conditionalPanel(condition="input.keep_accept_refuse_outliers == 'refuse'",
+                                                         checkboxInput("remove_imputations_to_fit", "Remove imputations to fit the model", value=T),
                                                          radioButtons("group_for_imputation_method", label = "Choose how to group units to build the model",
                                                                       choices = list("same strata"="strata", "same gear"='gear', "same loa"='loa', "same gear and loa"='gear_loa', "all data"='all_data' ), selected = 'strata'),
                                                          radioButtons("imputation_method", label = "Choose the imputation model to fix outliers",
