@@ -25,12 +25,22 @@ d_waterfall_italy=reactive({
     
     o=data.table(var=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi'), o=c(1,2,3,4,5,6,7,8), key="var")
     setkey(waterfall,var)
-    waterfall=waterfall[o]
-    setkey(waterfall, o)
-    
+    waterfall=waterfall[o] 
+    setkey(waterfall, o)     
     waterfall[,end:=cumsum(value)]
     waterfall[,start:=end-value]
-        
+    
+    # aggiungo yoy
+    waterfall[,yoy:=""]
+    yoy_temp=yoy[,list(yoy_value=sum(yoy_value)), keyby=var]
+    setkey(waterfall, var)
+    waterfall[yoy_temp, yoy:=paste0( ifelse(value/yoy_value<1,"-","+") , abs(round(value/yoy_value-1,0)), "%")]
+    move_rect=waterfall[var=='ricavi',value/10]
+    waterfall[,(c('end','start')):= list( end+move_rect , start+move_rect) ]
+    setkey(waterfall, o)
+    
+    waterfall
+
   }
   
 })
@@ -62,10 +72,20 @@ d_waterfall_strata=reactive({
     o=data.table(var=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi'), o=c(1,2,3,4,5,6,7,8), key="var")
     setkey(waterfall,var)
     waterfall=waterfall[o]
-    setkey(waterfall, id_strato,o)
-    
+    setkey(waterfall, id_strato,o)    
     waterfall[,end:=cumsum(value), keyby=.(id_strato)]
     waterfall[,start:=end-value, keyby=.(id_strato)]
+    
+    # aggiungo yoy
+    waterfall[,yoy:=""]
+    yoy_temp=yoy[,list(yoy_value=sum(yoy_value)), keyby=.(id_strato,var)]
+    setkey(waterfall, id_strato,var)
+    waterfall[yoy_temp, yoy:=paste0( ifelse(value/yoy_value<1,"-","+") , abs(round(value/yoy_value-1,0)), "%")]
+    move_rect=waterfall[var=='ricavi',list(moveup=value/3), keyby=id_strato]
+    waterfall[move_rect,(c('end','start')):= list( end+moveup , start+moveup) ]
+    setkey(waterfall, o)
+    
+    waterfall
     
   }
     
@@ -103,6 +123,17 @@ d_waterfall_loa=reactive({
     waterfall[,end:=cumsum(value), keyby=.(codlft199)]
     waterfall[,start:=end-value, keyby=.(codlft199)]
     
+    # aggiungo yoy
+    waterfall[,yoy:=""]
+    yoy_temp=yoy[,list(yoy_value=sum(yoy_value)), keyby=.(codlft199,var)]
+    setkey(waterfall, codlft199,var)
+    waterfall[yoy_temp, yoy:=paste0( ifelse(value/yoy_value<1,"-","+") , abs(round(value/yoy_value-1,0)), "%")]
+    move_rect=waterfall[var=='ricavi',list(moveup=value/3), keyby=codlft199]
+    waterfall[move_rect,(c('end','start')):= list( end+moveup , start+moveup) ]
+    setkey(waterfall, o)
+    
+    waterfall
+    
   }
   
 })
@@ -139,6 +170,17 @@ d_waterfall_gear=reactive({
     waterfall[,end:=cumsum(value), keyby=.(codsis199)]
     waterfall[,start:=end-value, keyby=.(codsis199)]
     
+    # aggiungo yoy
+    waterfall[,yoy:=""]
+    yoy_temp=yoy[,list(yoy_value=sum(yoy_value)), keyby=.(codsis199,var)]
+    setkey(waterfall, codsis199,var)
+    waterfall[yoy_temp, yoy:=paste0( ifelse(value/yoy_value<1,"-","+") , abs(round(value/yoy_value-1,0)), "%")]
+    move_rect=waterfall[var=='ricavi',list(moveup=value/3), keyby=codsis199]
+    waterfall[move_rect,(c('end','start')):= list( end+moveup , start+moveup) ]
+    setkey(waterfall, o)
+    
+    waterfall
+    
   }
   
 })
@@ -154,7 +196,7 @@ d_waterfall_gear_loa=reactive({
     else  
       d_panel()[var %in% c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro') , list(codsis199,codlft199,var,value) ]
     
-    waterfall=CJ(var=c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor'), codsis199=d_panel()[,unique(codsis199)],codlft199=d_panel()[,unique(codlft199)],value=as.numeric(0) )
+    waterfall=d_panel()[,CJ(var=c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor'), value=as.numeric(0) ),list(codsis199,codlft199)]
     setkey(waterfall, codsis199,codlft199, var)
     
     waterfall_cost=d_wat[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum( value)) ), by=.(codsis199,codlft199,var) ]
@@ -174,6 +216,17 @@ d_waterfall_gear_loa=reactive({
     
     waterfall[,end:=cumsum(value), keyby=.(codsis199,codlft199)]
     waterfall[,start:=end-value, keyby=.(codsis199,codlft199)]
+    
+    # aggiungo yoy
+    waterfall[,yoy:=""]
+    yoy_temp=yoy[,list(yoy_value=sum(yoy_value)), keyby=.(codsis199,codlft199,var)]
+    setkey(waterfall, codsis199,codlft199,var)
+    waterfall[yoy_temp, yoy:=paste0( ifelse(value/yoy_value<1,"-","+") , abs(round(value/yoy_value-1,0)), "%")]
+    move_rect=waterfall[var=='ricavi',list(moveup=value/3), keyby=.(codsis199,codlft199)]
+    waterfall[move_rect,(c('end','start')):= list( end+moveup , start+moveup) ]
+    setkey(waterfall, o)
+    
+    waterfall
     
   }
   

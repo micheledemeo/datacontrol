@@ -163,7 +163,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$waterfall_plot_italy = renderPlot({
-    d_waterfall_italy()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) + theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) ]   
+    d_waterfall_italy()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) + theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy)) ]   
   })
   
   output$waterfall_plot_strata = renderPlot({
@@ -173,11 +173,11 @@ shinyServer(function(input, output, session) {
       
       if (length(str_in_panel)<14 )  {
         
-        d_waterfall_strata()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~id_strato, ncol=2,scales = "free") +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" ))]
+          d_waterfall_strata()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~id_strato, ncol=2,scales = "free") +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy, size=4))  ]
         
       } else {
         
-        d_waterfall_strata()[ id_strato %in% str_in_panel[1:14] ,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~id_strato, ncol=2,scales = "free") +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) ]
+        d_waterfall_strata()[ id_strato %in% str_in_panel[1:14] ,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~id_strato, ncol=2,scales = "free") +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy),size=4)  ]
         
       }  
       
@@ -192,15 +192,14 @@ shinyServer(function(input, output, session) {
       sis_lft_in_panel=d_waterfall_gear_loa()[,.N,list(codsis199,codlft199)]
       
       if ( nrow(sis_lft_in_panel)<14 )  {
-        d_waterfall_gear_loa()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~ codsis199+codlft199, scales = "free",ncol = 2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) ]
+        d_waterfall_gear_loa()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~ codsis199+codlft199, scales = "free",ncol = 2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy), size=4) ]
         
       } else {
         
-        u_sis = sis_lft_in_panel[1:14, unique(codsis199)]
-        u_lft = sis_lft_in_panel[1:14, unique(codlft199)]
+        u_sis_flt = sis_lft_in_panel[1:14, unique(paste0(codsis199,codlft199))]
         
-        d_waterfall_gear_loa()[ codsis199 %in% u_sis & codlft199 %in% u_lft,
-                                ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~ codsis199+codlft199, scales = "free",ncol = 2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) ]
+        d_waterfall_gear_loa()[ paste0(codsis199,codlft199) %in% u_sis_flt,
+                                ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~ codsis199+codlft199, scales = "free",ncol = 2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy), size=4) ]
         
       }     
       
@@ -209,10 +208,10 @@ shinyServer(function(input, output, session) {
   })
   
   output$waterfall_plot_gear = renderPlot({
-    d_waterfall_gear()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~codsis199,scales = "free",ncol = 2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) ]
+    d_waterfall_gear()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~codsis199,scales = "free",ncol = 2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy)) ]
   })
   output$waterfall_plot_loa = renderPlot({
-    d_waterfall_loa()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~codlft199,scales = "free", ncol=2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) ]
+    d_waterfall_loa()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~codlft199,scales = "free", ncol=2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy))]
   })
   
   # genera dataset da esportare in "Checks on zero values" tabset ####

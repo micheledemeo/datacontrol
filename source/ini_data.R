@@ -48,9 +48,15 @@ s=s[anno==2014][,c('anno','id'):=NULL]
 setkey(all, id_strato)
 setkey(s, id_strato)
 all=s[all]
-rm(s)
 all[,gsa:=as.character(gsa)]
 all[is.na(regione), (c('regione','codsis199', 'codlft199', 'gsa', 'descrizione')):=list("UNKNOWN")]
+
+# importa dati per yoy in waterfall ####
+yoy=fread(pastedir(wd,"source/yoy"),select = c('id_strato','carbur','alcova','spcom','alcofi','spmanu','lavoro','prolor','ricavi') ) 
+yoy=melt(yoy,id.vars = 1, measure.vars = (2:ncol(yoy)), variable.factor = F,variable.name = "var", value.name = "yoy_value")
+setkey(yoy, id_strato)
+yoy=s[yoy][,descrizione:=NULL]
+rm(s)
 
 # importa dati mensili ####
 d_mensili=fread_mysql(tbname = 'schede_mensili')
