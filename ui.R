@@ -53,8 +53,8 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                                      choices = list("all units" = 'all', "subset units" = 'subset'), selected = 'all'),
                                         conditionalPanel(condition="input.subset_units == 'subset'",
                                                          uiOutput("outliers_id_battello_list_to_subset")
-                                        ),
-                                        checkboxInput("keep_imputations", "Keep existing imputations (of previous sessions)", value=F)
+                                        )
+                                        #,checkboxInput("keep_imputations", "Keep existing imputations (of previous sessions)", value=F)
                                         ),
                        conditionalPanel(condition="input.headtab== 8",
                                         checkboxInput(inputId = "start_imputation",label = "START IMPUTATION ON APPLIED FILTERS", value=F)

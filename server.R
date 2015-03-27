@@ -133,7 +133,7 @@ shinyServer(function(input, output, session) {
   )
   
   d_outliers_parameter=reactive({
-        
+
     d_outliers=d_panel()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,value,is_ok,value_ok,parameter,value_or)]
     d_outliers2=d_outliers[,list( out_up=quantile(parameter,.75)+1.5*IQR(parameter), out_down=quantile(parameter,.25)-1.5*IQR(parameter) ),  keyby=.(var)]
     setkey(d_outliers, var )
