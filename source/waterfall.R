@@ -4,6 +4,8 @@ d_waterfall_italy=reactive({
   
   if( ok_rows() ){
     
+    strata_in_d_panel=d_panel()[,unique(id_strato)]
+    
     d_wat = 
       if(input_apply_weights()==TRUE) 
         d_panel()[var %in% c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro') , list(var,value=as.numeric(value/pr_i) ) ]
@@ -32,12 +34,16 @@ d_waterfall_italy=reactive({
     
     # aggiungo yoy
     waterfall[,yoy:=""]
-    yoy_temp=yoy[,list(yoy_value=sum(yoy_value)), keyby=var]
+    yoy_temp=yoy[ id_strato %in% strata_in_d_panel ,list(yoy_value=sum(yoy_value)), keyby=var]
     setkey(waterfall, var)
-    waterfall[yoy_temp, yoy:=paste0( ifelse(value/yoy_value<1,"-","+") , abs(round(value/yoy_value-1,0)), "%")]
+    write.table.ok(yoy_temp,"yoy_temp.csv")
+    write.table.ok(waterfall,"waterfall_italy.csv")
+    waterfall[yoy_temp, yoy:=paste0( ifelse(value/yoy_value<1,"-","+") , abs(round(100*(value/yoy_value-1)) ), "%")]
     move_rect=waterfall[var=='ricavi',value/10]
     waterfall[,(c('end','start')):= list( end+move_rect , start+move_rect) ]
     setkey(waterfall, o)
+    
+    
 
     waterfall
 
@@ -49,6 +55,8 @@ d_waterfall_italy=reactive({
 d_waterfall_strata=reactive({
   
   if( ok_rows() ){
+    
+    strata_in_d_panel=d_panel()[,unique(id_strato)]
     
     d_wat = 
       if(input_apply_weights()==TRUE) 
@@ -78,9 +86,9 @@ d_waterfall_strata=reactive({
     
     # aggiungo yoy
     waterfall[,yoy:=""]
-    yoy_temp=yoy[,list(yoy_value=sum(yoy_value)), keyby=.(id_strato,var)]
+    yoy_temp=yoy[ id_strato %in% strata_in_d_panel,list(yoy_value=sum(yoy_value)), keyby=.(id_strato,var)]
     setkey(waterfall, id_strato,var)
-    waterfall[yoy_temp, yoy:=paste0( ifelse(value/yoy_value<1,"-","+") , abs(round(value/yoy_value-1,0)), "%")]
+    waterfall[yoy_temp,  yoy:=paste0( ifelse(value/yoy_value<1,"-","+") , abs(round(100*(value/yoy_value-1)) ), "%")]
     move_rect=waterfall[var=='ricavi',list(moveup=value/3), keyby=id_strato]
     waterfall[move_rect,(c('end','start')):= list( end+moveup , start+moveup) ]
     setkey(waterfall, o)
@@ -95,6 +103,8 @@ d_waterfall_strata=reactive({
 d_waterfall_loa=reactive({
   
   if( ok_rows() ){
+    
+    strata_in_d_panel=d_panel()[,unique(id_strato)]
     
     d_wat = 
       if(input_apply_weights()==TRUE) 
@@ -125,9 +135,9 @@ d_waterfall_loa=reactive({
     
     # aggiungo yoy
     waterfall[,yoy:=""]
-    yoy_temp=yoy[,list(yoy_value=sum(yoy_value)), keyby=.(codlft199,var)]
+    yoy_temp=yoy[ id_strato %in% strata_in_d_panel ,list(yoy_value=sum(yoy_value)), keyby=.(codlft199,var)]
     setkey(waterfall, codlft199,var)
-    waterfall[yoy_temp, yoy:=paste0( ifelse(value/yoy_value<1,"-","+") , abs(round(value/yoy_value-1,0)), "%")]
+    waterfall[yoy_temp,  yoy:=paste0( ifelse(value/yoy_value<1,"-","+") , abs(round(100*(value/yoy_value-1)) ), "%")]
     move_rect=waterfall[var=='ricavi',list(moveup=value/3), keyby=codlft199]
     waterfall[move_rect,(c('end','start')):= list( end+moveup , start+moveup) ]
     setkey(waterfall, o)
@@ -142,6 +152,8 @@ d_waterfall_loa=reactive({
 d_waterfall_gear=reactive({
   
   if( ok_rows() ){
+    
+    strata_in_d_panel=d_panel()[,unique(id_strato)]
     
     d_wat = 
       if(input_apply_weights()==TRUE) 
@@ -172,9 +184,9 @@ d_waterfall_gear=reactive({
     
     # aggiungo yoy
     waterfall[,yoy:=""]
-    yoy_temp=yoy[,list(yoy_value=sum(yoy_value)), keyby=.(codsis199,var)]
+    yoy_temp=yoy[ id_strato %in% strata_in_d_panel ,list(yoy_value=sum(yoy_value)), keyby=.(codsis199,var)]
     setkey(waterfall, codsis199,var)
-    waterfall[yoy_temp, yoy:=paste0( ifelse(value/yoy_value<1,"-","+") , abs(round(value/yoy_value-1,0)), "%")]
+    waterfall[yoy_temp, yoy:=paste0( ifelse(value/yoy_value<1,"-","+") , abs(round(100*(value/yoy_value-1)) ), "%")]
     move_rect=waterfall[var=='ricavi',list(moveup=value/3), keyby=codsis199]
     waterfall[move_rect,(c('end','start')):= list( end+moveup , start+moveup) ]
     setkey(waterfall, o)
@@ -189,6 +201,8 @@ d_waterfall_gear=reactive({
 d_waterfall_gear_loa=reactive({
   
   if( ok_rows() ){
+    
+    strata_in_d_panel=d_panel()[,unique(id_strato)]
     
     d_wat = 
       if(input_apply_weights()==TRUE) 
@@ -219,9 +233,9 @@ d_waterfall_gear_loa=reactive({
     
     # aggiungo yoy
     waterfall[,yoy:=""]
-    yoy_temp=yoy[,list(yoy_value=sum(yoy_value)), keyby=.(codsis199,codlft199,var)]
+    yoy_temp=yoy[ id_strato %in% strata_in_d_panel,list(yoy_value=sum(yoy_value)), keyby=.(codsis199,codlft199,var)]
     setkey(waterfall, codsis199,codlft199,var)
-    waterfall[yoy_temp, yoy:=paste0( ifelse(value/yoy_value<1,"-","+") , abs(round(value/yoy_value-1,0)), "%")]
+    waterfall[yoy_temp,  yoy:=paste0( ifelse(value/yoy_value<1,"-","+") , abs(round(100*(value/yoy_value-1)) ), "%")]
     move_rect=waterfall[var=='ricavi',list(moveup=value/3), keyby=.(codsis199,codlft199)]
     waterfall[move_rect,(c('end','start')):= list( end+moveup , start+moveup) ]
     setkey(waterfall, o)
