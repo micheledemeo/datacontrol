@@ -8,7 +8,7 @@ outliers_in_input=reactive({
   else all[0]
   d_outliers=d_outliers[ var %in% input_var_imp() ]
   
-  if(input_keep_imputations()==1) d_outliers=d_outliers[ !(is_ok==1 & !grepl(session_info, notes,fixed = T)), .(id_battello,var,value_or,parameter_or,sent) ]    
+  #if(input_keep_imputations()==1) d_outliers=d_outliers[ !(is_ok==1 & !grepl(session_info, notes,fixed = T)), .(id_battello,var,value_or,parameter_or,sent) ]    
   if( input_not_sent_as_0()==0 ) d_outliers=d_outliers[sent==1]  
   d_outliers= if(input$abs_or_mean_in_fix=='abs-outliers') d_outliers[,.(id_battello,var,var_for_outliers=value_or)] else d_outliers[,.(id_battello,var,var_for_outliers=parameter_or)]
   
@@ -101,13 +101,13 @@ data_for_imputation=reactive({
 # fit the model ####
 imputation_output=reactive({ 
   
-  #input_remove_imputations_to_fit()
+  input_remove_imputations_to_fit()
    
   if( nrow(data_for_imputation()) >0 ){
     key_vec=setdiff( names(data_for_imputation()) , c("id_battello", "value_or") )
     setkey(all, id_battello,var)
     in_imputation=all[outliers_in_imputation(), c('id_battello',key_vec,'giorni_mare','equipaggio_medio'), with=F]
-    ricavi=all[outliers_in_imputation()][var=='ricavi', .(id_battello,ricavi=value_ok)]
+    ricavi=all[.(outliers_in_imputation()[,unique(id_battello)])][var=='ricavi', .(id_battello,ricavi=value_or)]
     setkey(ricavi, id_battello)
     in_imputation=ricavi[in_imputation]
     # : id_battello,key_vec,giorni_mare,equipaggio_medio,ricavi
@@ -115,37 +115,41 @@ imputation_output=reactive({
     setkeyv(in_imputation, key_vec)
     
     if (input_imputation_method()=='mean') {
-      mean_model=data_for_imputation()[,list(imputation_value=round(mean(value_or),0) ), keyby=key_vec]
-      mean_model=mean_model[in_imputation, nomatch=0]
-      mean_model[,imputation_parameter:=as.numeric(0) ]
-      mean_model[, imputation_parameter:=ifelse(var %in% c('spmanu','alcofi','amm','indeb','invest'),
-                                                round(as.numeric(imputation_value)),
-                                                ifelse(var %in% c('alcova','carbur','ricavi','ricavi_est') &  giorni_mare>0,
-                                                       round(imputation_value/giorni_mare),
-                                                       ifelse(var=='lavoro' &  equipaggio_medio>0,
-                                                              round(imputation_value/equipaggio_medio),
-                                                              ifelse( var=='spcom' & ricavi>0,
-                                                                      round(imputation_value/ricavi,3),
-                                                                      0)
-                                                       ) 
-                                                )
-      )
-      ]    
-      mean_model=mean_model[, list(id_battello,var,imputation_value,imputation_parameter)]
+      mean_model=data_for_imputation()[,list(imputation_value=round(mean(value_or),0),imputation_notes='ok' ), keyby=key_vec]
+      mean_model=mean_model[in_imputation]
+     
+      mean_model[!is.na(imputation_notes),imputation_parameter:=as.numeric(0) ]
+      mean_model[!is.na(imputation_notes), 
+                 imputation_parameter:=ifelse(var %in% c('spmanu','alcofi','amm','indeb','invest'),
+                                              round(as.numeric(imputation_value)),
+                                              ifelse(var %in% c('alcova','carbur','ricavi','ricavi_est') &  giorni_mare>0,
+                                                     round(imputation_value/giorni_mare),
+                                                     ifelse(var=='lavoro' &  equipaggio_medio>0,
+                                                            round(imputation_value/equipaggio_medio),
+                                                            ifelse( var=='spcom' & ricavi>0,
+                                                                    round(imputation_value/ricavi,3),
+                                                                    0)
+                                                            ) 
+                                                      )
+                                              )
+                ]
+      mean_model=mean_model[, list(id_battello,var,imputation_value,imputation_parameter,imputation_notes)]
+      mean_model[is.na(imputation_notes),imputation_notes:="notok"]
       setkey(mean_model, id_battello,var)
       mean_model
       
     } else if (input_imputation_method()=='regression') {
       reg_model=data_for_imputation()[,.N,keyby=list(id_battello,var)]
-      write.table.ok(data_for_imputation(), "data_for_imputation.csv")
-      write.table.ok(reg_model, "reg_model.csv")
       setkey(all, id_battello,var)
       reg_model=all[reg_model, nomatch=0,c('id_battello',key_vec,'giorni_mare','value_or'), with=F]
       reg_model=reg_model[,as.list(lm(value_or~giorni_mare)$coeff), keyby=key_vec]
       setnames(reg_model,c('(Intercept)','giorni_mare'), c('a','b') )
-      reg_model=in_imputation[reg_model][,list(id_battello,var,imputation_value=round(a+b*giorni_mare,0),giorni_mare,equipaggio_medio,ricavi )]
-      reg_model[,imputation_parameter:=as.numeric(0) ]
-      reg_model[, imputation_parameter:=ifelse(var %in% c('spmanu','alcofi','amm','indeb','invest'),
+      reg_model[,imputation_notes:='ok']
+      reg_model=reg_model[in_imputation]
+      reg_model[!is.na(imputation_notes),imputation_value:=round(a+b*giorni_mare,0)]
+      #reg_model=reg_model[,list(id_battello,var,imputation_value=round(a+b*giorni_mare,0),giorni_mare,equipaggio_medio,ricavi,imputation_notes )]
+      reg_model[!is.na(imputation_notes),imputation_parameter:=as.numeric(0) ]
+      reg_model[!is.na(imputation_notes), imputation_parameter:=ifelse(var %in% c('spmanu','alcofi','amm','indeb','invest'),
                                                round(as.numeric(imputation_value)),
                                                ifelse(var %in% c('alcova','carbur','ricavi','ricavi_est') &  giorni_mare>0,
                                                       round(imputation_value/giorni_mare),
@@ -158,10 +162,11 @@ imputation_output=reactive({
                                                )
       )
       ]
-      reg_model=reg_model[, list(id_battello,var,imputation_value,imputation_parameter)]
+      reg_model=reg_model[, list(id_battello,var,imputation_value,imputation_parameter,imputation_notes)]
+      reg_model[is.na(imputation_notes),imputation_notes:="notok"]
       setkey(reg_model, id_battello,var)
       reg_model
-      # : id_battello, var, imputation_value
+      # : id_battello, var, imputation_value,imputation_parameter,imputation_notes
       
     } else if (input_imputation_method()=='hot-deck') {
       hotdeck=copy(data_for_imputation())
@@ -173,11 +178,11 @@ imputation_output=reactive({
       hotdeck=hotdeck[quant_to_filter, nomatch=0]
       setnames(hotdeck, "value_or", "imputation_value")
       # rimuovo la i e id_battello per avere la chiave solo su key_vec
-      hotdeck[,c('id_battello','i'):=NULL]
+      hotdeck[,c('id_battello','i','imputation_notes'):=list(NULL,NULL,"ok")]
       setkeyv(hotdeck, key_vec)
       hotdeck=hotdeck[in_imputation]
-      hotdeck[,imputation_parameter:=as.numeric(0) ]
-      hotdeck[, imputation_parameter:=ifelse(var %in% c('spmanu','alcofi','amm','indeb','invest'),
+      hotdeck[!is.na(imputation_notes),imputation_parameter:=as.numeric(0) ]
+      hotdeck[!is.na(imputation_notes), imputation_parameter:=ifelse(var %in% c('spmanu','alcofi','amm','indeb','invest'),
                                              round(as.numeric(imputation_value)),
                                              ifelse(var %in% c('alcova','carbur','ricavi','ricavi_est') &  giorni_mare>0,
                                                     round(imputation_value/giorni_mare),
@@ -190,7 +195,8 @@ imputation_output=reactive({
                                              )
       )
       ] 
-      hotdeck=hotdeck[,list(id_battello,var,imputation_value,imputation_parameter)]
+      hotdeck=hotdeck[,list(id_battello,var,imputation_value,imputation_parameter,imputation_notes)]
+      hotdeck[is.na(imputation_notes),imputation_notes:="notok"]
       setkey(hotdeck, id_battello,var)
       hotdeck
     }  
@@ -205,6 +211,8 @@ imputation_output=reactive({
 output$outliers_in_imputation_dt=renderDataTable({
   
   input_remove_imputations_to_fit()
+#    write.table.ok(imputation_output(),"imputation_output.csv")
+#   write.table.ok(data_for_imputation(),"data_for_imputation.csv")
   
   if (input_start_imputation()==0 ) {
     setkey(all, id_battello,var)
@@ -234,31 +242,23 @@ output$outliers_in_imputation_dt=renderDataTable({
     } else if (input_keep_accept_refuse_outliers()=="accept") { 
       
       setkey(all, id_battello,var)
-      nts=paste(session_info, input_abs_or_mean_in_fix(), input_keep_imputations(), input_subset_units(), input_keep_accept_refuse_outliers(), sep="|")
+      nts=paste(session_info, input_abs_or_mean_in_fix(), input_subset_units(), input_keep_accept_refuse_outliers(), sep="|")
       all[outliers_in_imputation(), (c('value_ok','parameter_ok','notes','is_ok')):=list(value_or,parameter_or,nts,1)]
       all[outliers_in_imputation(), .(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,is_ok,imputation=value_ok,imputation_parameter=parameter_ok,outlier=value_or,parameter_outlier=parameter_or,notes)]
       
     } else { # qui input_keep_accept_refuse_outliers()=="refuse" (start imputation)
-      nts=paste(session_info, input_abs_or_mean_in_fix(), input_keep_imputations(),  input_subset_units(), input_keep_accept_refuse_outliers(), input_group_for_imputation_method(),input_imputation_method(), sep="|")
-      #imputation_output()
+      
+      nts=paste(session_info, input_abs_or_mean_in_fix(), input_subset_units(), input_keep_accept_refuse_outliers(), input_remove_imputations_to_fit() ,input_group_for_imputation_method(),input_imputation_method(), sep="|")
       setkey(all, id_battello,var )
-      if(nrow(imputation_output())>0){
-        all[imputation_output(), (c('value_ok','parameter_ok','is_ok','notes')):=list(imputation_value,imputation_parameter,1L,nts )]
-        setkey(all, id_battello,var)
-        all[outliers_in_imputation(), .(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,is_ok,imputation=value_ok,imputation_parameter=parameter_ok,outlier=value_or,parameter_outlier=parameter_or,notes)]
-        
-      } else { #in questo caso non ci sono dati a sufficienza per stimare, quindi ripristino la soluzione scaricata
-        nts=paste("not enough data to fit the model with the actual filter")
-        setkey(all, id_battello,var)
-        all[outliers_in_imputation(), (c('value_ok','parameter_ok','notes','is_ok')):=
-              list( ifelse(is.na(hist_value),value_or,hist_value),
-                    ifelse(is.na(hist_value),parameter_or,hist_parameter),
-                    nts,
-                    ifelse(is.na(hist_value),0,hist_is_ok)
-              )
-            ]
-        all[outliers_in_imputation(), .(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,notes)]
-      }
+      #write.table.ok(all[imputation_output(), list(value_ok,parameter_ok,is_ok,notes,imputation_notes)], "all_imputations_output.csv" )
+      all[imputation_output(), (c('value_ok','parameter_ok','is_ok','notes')):=list(ifelse(imputation_notes=='ok',imputation_value, ifelse(is.na(hist_value),value_or,hist_value) ),
+                                                                                    ifelse(imputation_notes=='ok',imputation_parameter, ifelse(is.na(hist_parameter),parameter_or,hist_parameter)),
+                                                                                    ifelse(imputation_notes=='ok',1L,  ifelse(is.na(hist_is_ok),0,hist_is_ok) ),
+                                                                                    ifelse(imputation_notes=='ok', nts, paste('Keeping the data from the server. Not enough data to fit the model with the current filters.',ifelse(is.na(hist_notes),"",hist_notes) ))
+                                                                                    )
+          ]
+      setkey(all, id_battello,var)
+      all[outliers_in_imputation()][, .(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,is_ok,imputation=value_ok,imputation_parameter=parameter_ok,outlier=value_or,parameter_outlier=parameter_or, notes )]
       
     }
     
