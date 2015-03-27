@@ -182,6 +182,6 @@ if(nrow(hist)>0){
   all=hist[all]
   all[!is.na(hist_value), (c('value_ok','parameter_ok','notes','is_ok','hist_is_ok')):=list(hist_value,hist_parameter,hist_notes,1L,1L)]
 } else {
-  all[,c('hist_value','hist_parameter','hist_notes'):=list(NA)]
+  all[,c('hist_value','hist_parameter','hist_notes','hist_is_ok'):=list(NA)]
 }
 

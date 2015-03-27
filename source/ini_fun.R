@@ -9,11 +9,12 @@ require(ggplot2)
 sum2=function(...,na.rm=T) sum(...,na.rm=na.rm)
 
 # startup functions ####
-fread_mysql = function( tbname, dbname="nisea" , user="nisea", psw="n1s34", csvname=strftime(Sys.time(),"%Y%m%d%H%M%S"), tempdir=getwd() ,mysqldir="C:/wamp/bin/mysql/mysql5.6.17/bin" ) {
+fread_mysql = function( tbname, dbname="nisea" , user="nisea", psw="n1s34", csvname=strftime(Sys.time(),"%Y%m%d%H%M%S"), temp_dir=tempdir() ,mysqldir="C:/wamp/bin/mysql/mysql5.6.17/bin" ) {
   
   require(data.table)
-  csvdir=paste(tempdir,csvname,sep = "/")
-  csvdir_names=paste(tempdir,paste0(csvname,"_names"),sep = "/")
+  temp_dir=gsub("\\","/",temp_dir,fixed = T)
+  csvdir=paste(temp_dir,csvname,sep = "/")
+  csvdir_names=paste(temp_dir,paste0(csvname,"_names"),sep = "/")
   #ifnull(inail_infortuni,'')
   
   if (file.exists(csvdir_names)) file.remove(csvdir_names)
