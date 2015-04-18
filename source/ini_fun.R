@@ -15,7 +15,6 @@ fread_mysql = function( tbname, dbname="nisea" , user="nisea", psw="n1s34", csvn
   temp_dir=gsub("\\","/",temp_dir,fixed = T)
   csvdir=paste(temp_dir,csvname,sep = "/")
   csvdir_names=paste(temp_dir,paste0(csvname,"_names"),sep = "/")
-  #ifnull(inail_infortuni,'')
   
   if (file.exists(csvdir_names)) file.remove(csvdir_names)
   strsql=paste0("select * from  (SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '",dbname,"' AND TABLE_NAME = '",tbname,"') as t1 INTO OUTFILE '",csvdir_names,"'")
