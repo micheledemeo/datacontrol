@@ -306,6 +306,7 @@ output$notes_on_fixing=renderText({
   
   })
 output$upload_dt = renderDataTable({ upload_data()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,imputation_value=value_ok,original_value=value_or,notes)] })
+output$version_nr=renderText({ "0.1.83" })
 #output$uti=renderText({ input_data_type() })  
   
 }) #shinyServer

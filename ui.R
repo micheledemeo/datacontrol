@@ -14,7 +14,7 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                      sidebarPanel(
                        conditionalPanel(condition="input.headtab==9",checkboxInput("upload_button", "UPLOAD OF IMPUTATION", value=F)),
                        conditionalPanel(condition="input.headtab >= 1 && input.headtab <= 4",
-#                                         checkboxInput("data_type", "Show graphs with imputations", value=F)
+                                        verbatimTextOutput("version_nr"),
                                         radioButtons("show_output", label = 'Choose if:',
                                                      choices = list("Show output with original data" = 'orig_data', 'Show output with imputations' = 'imput_data'), selected = 'orig_data')
                         ),
