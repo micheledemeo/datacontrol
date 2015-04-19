@@ -251,6 +251,7 @@ observe({
     withProgress(message = "Uploadig data to remote server:",{
       n=20
       csv=upload_data()[,list(id_battello,var,hist_value=value_ok,hist_parameter=parameter_ok,hist_notes=notes)]
+      #write.table(csv, paste0(Sys.getenv("LOCALAPPDATA"),"\\Nicoda\\hist"), sep=";", quote = FALSE, na = "", row.names = F)
       write.table(csv, paste(getwd(),"source/hist",sep="/"), sep=";", quote = FALSE, na = "", row.names = F)
       pid=data.table(system("tasklist /V",intern = T))[grepl("127.0.0.1:12345",V1),V1]
       pid=regmatches(pid, regexpr("\\d+(?=\\s*Console)",pid,perl=T))

@@ -192,6 +192,7 @@ rm(ricavi)
 # value_ok è il valore finale su cui si fa l'espansione. esso comprende le imputazioni dell'utente
 # value è il campo usato nelle visualizzazioni grafiche. è pari a value_orig (default) se "Keep outliers in your charts", mentre diventa pari a value_ok quando "Take a tour with imputations"
 all[,c('value_ok','value_or','parameter_ok','parameter_or','is_ok','notes'):=list(value,value,parameter,parameter,0,"") ]
+#if( file.exists(paste0(Sys.getenv("LOCALAPPDATA"),"\\Nicoda\\hist") )) hist=fread( paste0(Sys.getenv("LOCALAPPDATA"),"\\Nicoda\\hist") ) else hist=data.table()
 if( file.exists(pastedir(wd,"source/hist")) ) hist=fread(pastedir(wd,"source/hist") ) else hist=data.table()
 if(nrow(hist)>0){
   setkey(hist, id_battello,var)
