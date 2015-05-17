@@ -10,9 +10,12 @@ shinyServer(function(input, output, session) {
   source( paste(getwd(), "source/data_download.R", sep="/"),loc=T )  
     
   output$var=renderUI({  selectInput("var", label = "Select the variables:", choices =var, selected = var, multiple = T ) })
-  output$codsis=renderUI({selectInput("codsis", label = "Apply a filter on gear type:", choices =codsis, selected = codsis, multiple = T ) })
-  output$codlft=renderUI({ selectInput("codlft", label = "Apply a filter on LOA:", choices =codlft, selected = codlft, multiple = T ) })  
-  output$strato=renderUI({ selectInput("strato", label = "Select the strata:", choices =strato, selected = NULL, multiple = T ) })
+  output$codsis=renderUI({selectInput("codsis", label = "Gear:", choices =codsis, selected = codsis, multiple = T ) })
+  output$codlft=renderUI({ selectInput("codlft", label = "LOA:", choices =codlft, selected = codlft, multiple = T ) })  
+  output$regione=renderUI({ selectInput("regione", label = "Region:", choices =regione, selected = regione, multiple = T ) })
+  output$gsa=renderUI({ selectInput("gsa", label = "GSA:", choices =gsa, selected = gsa, multiple = T ) })
+  output$strato=renderUI({ selectInput("strato", label = "Filter by strata:", choices =strato, selected = NULL, multiple = T ) })
+  output$ril=renderUI({ selectInput("ril", label = "Filter by ril:", choices =ril, selected = NULL, multiple = T ) })
   #UI for imputation:
   output$var_imp=renderUI({  selectInput("var_imp", label = "Select the variables:", choices =var, selected = var, multiple = T ) })
   output$codsis_imp=renderUI({selectInput("codsis_imp", label = "Apply a filter on gear type:", choices =codsis, selected = codsis, multiple = T ) })
@@ -26,19 +29,30 @@ shinyServer(function(input, output, session) {
       updateSelectInput(session, "codlft_imp", choices =codlft, selected = NULL)
     }
   })
-  
-  observe({ if (!is.null(input_codsis()) | !is.null(input_codlft())  ) updateSelectInput(session, "strato", choices =strato, selected = NULL) })
+  # update of input strato,sis,loa,ril ####
   observe({ 
-    if (!is.null(input_strato()) ) {
+    if (!is.null(input_codsis()) | !is.null(input_codlft()) | !is.null(input_regione()) | !is.null(input_gsa())  ) {
+      updateSelectInput(session, "strato", choices =strato, selected = NULL) 
+      updateSelectInput(session, "ril", choices =ril, selected = NULL)   
+    } 
+  })
+  observe({ 
+    if (!is.null(input_strato()) | !is.null(input_ril()) ) {
       updateSelectInput(session, "codsis", choices =codsis, selected = NULL) 
       updateSelectInput(session, "codlft", choices =codlft, selected = NULL)
+      updateSelectInput(session, "regione", choices =regione, selected = NULL)
+      updateSelectInput(session, "gsa", choices =gsa, selected = NULL)
     }
   })
+  observe({ if (!is.null(input_strato()))  updateSelectInput(session, "ril", choices =ril, selected = NULL)    })
+  observe({ if (!is.null(input_ril()))  updateSelectInput(session, "strato", choices =strato, selected = NULL)     })
   
   observe({ 
     if (input$reset>0) {
       updateSelectInput(session, "codsis", choices =codsis, selected = codsis) 
       updateSelectInput(session, "codlft", choices =codlft, selected = codlft)
+      updateSelectInput(session, "regione", choices =regione, selected = regione)
+      updateSelectInput(session, "gsa", choices =gsa, selected = gsa)
     }
   })
   
@@ -48,10 +62,9 @@ shinyServer(function(input, output, session) {
   selected_strata=reactive({ 
     
     if (  !is.null( input_strato() ) ) as.numeric(input_strato())
-    else if ( !is.null(input_codsis()) &  is.null(input_codlft()) )  str_sis_lft[ codsis199 %in%  input_codsis(),  unique(id_strato)]
-    else if ( is.null(input_codsis()) &  !is.null(input_codlft()) )  str_sis_lft[ codlft199 %in%  input_codlft(),  unique(id_strato)]
-    else if ( !is.null(input_codsis()) &  !is.null(input_codlft()) ) str_sis_lft[ codsis199 %in%  input_codsis() & codlft199 %in%  input_codlft(),  unique(id_strato)]  
-    else str_sis_lft[ , unique(id_strato)]
+    else if ( !is.null( input_ril() ) ) ril_strato[.(input_ril()), unique(id_strato) ]
+    else str_sis_lft_reg_gsa[codsis199 %in%  input_codsis_all() & codlft199 %in%  input_codlft_all() & regione %in% input_regione_all() & gsa %in% input_gsa_all(),
+                             unique(id_strato)]
     
   })
   
@@ -63,10 +76,8 @@ shinyServer(function(input, output, session) {
    if (input_show_output()=='orig_data') all[,(c('value','parameter')):=list(value_or,parameter_or)] else all[,(c('value','parameter')):=list(value_ok,parameter_ok)]
     
     d_panel=if (  !is.null( input_strato() ) ) all[giorni_mare>(input_check_gio()-1) & id_strato %in% input_strato() ]
-    else if ( !is.null(input_codsis()) &  is.null(input_codlft()) )  all[giorni_mare>(input_check_gio()-1)  & codsis199 %in% input_codsis()]
-    else if ( is.null(input_codsis()) &  !is.null(input_codlft()) )  all[giorni_mare>(input_check_gio()-1)  & codlft199 %in% input_codlft()]
-    else if ( !is.null(input_codsis()) &  !is.null(input_codlft()) ) all[giorni_mare>(input_check_gio()-1)  & codsis199 %in% input_codsis() & codlft199 %in% input_codlft()]  
-    else all[0]
+    else if ( !is.null( input_ril() ) ) all[giorni_mare>(input_check_gio()-1) & id_rilevatore %in% input_ril() ]
+    else all[giorni_mare>(input_check_gio()-1) & codsis199 %in% input_codsis_all() & codlft199 %in%  input_codlft_all() & regione %in% input_regione_all() & gsa %in% input_gsa_all()]
     
     if( input_not_sent_as_0()==0 ) d_panel=d_panel[sent==1]
     
@@ -91,30 +102,28 @@ shinyServer(function(input, output, session) {
 
   ok_rows=reactive({nrow(d_panel())>0})
   
-  # considering updateSelectInput, the last else in facet will never be true
-  facet_vars=reactive({ if (  !is.null( input_strato() ) & ( is.null(input_codsis()) | is.null(input_codlft())) ) "id_strato" 
-                        else if ( !is.null(input_codsis()) &  is.null(input_codlft()) ) "codsis199"
-                        else if ( is.null(input_codsis()) &  !is.null(input_codlft()) ) "codlft199"
-                        else if ( !is.null(input_codsis()) &  !is.null(input_codlft()) ) c("codsis199","codlft199") 
-                        else ( c("id_strato","codsis199","codlft199")  )
+  facet_vars=reactive({ 
+    c("id_strato","id_rilevatore","codsis199","codlft199","regione","gsa")[
+      which(
+        c(!is.null(input_strato()), !is.null(input_ril()), !is.null(input_codsis()), !is.null(input_codlft()), !is.null(input_regione()), !is.null(input_gsa()))
+      )
+      ]
   })  
   
   d_pie=reactive({
     
     d_pie = 
       if(input_apply_weights()==TRUE) 
-        d_panel()[var %in% c("alcova","carbur","lavoro","spcom","spmanu","alcofi" ) , list(id_strato,codsis199,codlft199,var,value=value/pr_i) ]
+        d_panel()[var %in% c("alcova","carbur","lavoro","spcom","spmanu","alcofi" ) , list(id_strato,id_rilevatore,codsis199,codlft199,regione,gsa,var,value=value/pr_i) ]
     else  
-      d_panel()[var %in% c("alcova","carbur","lavoro","spcom","spmanu","alcofi" ) , list(id_strato,codsis199,codlft199,var,value) ]
-    
+      d_panel()[var %in% c("alcova","carbur","lavoro","spcom","spmanu","alcofi" ) , list(id_strato,id_rilevatore,codsis199,codlft199,regione,gsa,var,value) ]
     d_pie=d_pie[,list(value=as.numeric(sum2(value)) ),  keyby=c(facet_vars(),'var')]
     d_pie2=d_pie[,list(tot=sum2(value) ), keyby=c(facet_vars())]      
     d_pie[d_pie2, value:=round(ifelse(tot==0,0,value/tot),3)]      
     d_pie[,pie_label_position:=cumsum(value), by=c(facet_vars() )]
     d_pie[,pie_label_position:=pie_label_position-.5*value]
-    d_pie
-    
-    
+    setkeyv(d_pie, facet_vars() )
+    d_pie 
   })
   
   d_outliers_value=reactive({
@@ -150,8 +159,16 @@ shinyServer(function(input, output, session) {
   # definisci i waterfall data.table ####
   source( paste(getwd(), "source/waterfall.R", sep="/"),loc=T )
   
-  output$pie = renderPlot({   
-    if (nrow(d_pie())>0)  d_pie()[,ggplot(.SD, aes(x="",y=value,fill=var)) + geom_bar(stat="identity") + coord_polar(theta="y") + facet_wrap(~eval(parse(text= paste0(facet_vars(), collapse=" + " ) )),ncol=5) + geom_text(aes(label = paste0(round(100*value,0), "%"), y=pie_label_position) )]
+  output$pie = renderPlot({    
+    if(nrow(d_pie())>0){
+    
+      d_pie_filter=d_pie()[,.N,keyby=setdiff(facet_vars(),"var")][,N:=NULL]
+      if(nrow(d_pie_filter)>10) {
+        d_pie_filter=d_pie_filter[1:10]
+        setkeyv(d_pie_filter, setdiff(facet_vars(),"var"))
+      }
+      d_pie()[d_pie_filter,ggplot(.SD, aes(x="",y=value,fill=var)) + geom_bar(stat="identity") + coord_polar(theta="y") + facet_wrap(~eval(parse(text= paste0(facet_vars(), collapse=" + " ) )),ncol=5) + geom_text(aes(label = paste0(round(100*value,0), "%"), y=pie_label_position) )]
+    }
   })
   
   output$boxplot_value = renderPlot({
@@ -212,6 +229,22 @@ shinyServer(function(input, output, session) {
   })
   output$waterfall_plot_loa = renderPlot({
     d_waterfall_loa()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~codlft199,scales = "free", ncol=2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy))]
+  })
+  output$waterfall_plot_regione = renderPlot({
+    
+    if(ok_rows()) {      
+      regione_in_panel=d_waterfall_regione()[,unique(regione)]
+      if(length(regione_in_panel)>10) {
+        
+        d_waterfall_regione()[regione %in% regione_in_panel[1:10],
+  ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~regione,scales = "free", ncol=2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy))]
+        
+      } else {
+        
+        d_waterfall_regione()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~regione,scales = "free", ncol=2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy))]
+        
+      }
+    }    
   })
   
   # genera dataset da esportare in "Checks on zero values" tabset ####

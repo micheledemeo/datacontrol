@@ -18,15 +18,17 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                         radioButtons("show_output", label = 'Choose if:',
                                                      choices = list("Show output with original data" = 'orig_data', 'Show output with imputations' = 'imput_data'), selected = 'orig_data')
                         ),
-                       conditionalPanel(condition="input.headtab == 1 || input.headtab == 2 || (input.headtab == 6 && input.zero_or_not_sent == 61)", uiOutput("var"), br(), br() ),
+                       conditionalPanel(condition="input.headtab == 1 || input.headtab == 2 || (input.headtab == 6 && input.zero_or_not_sent == 61)", uiOutput("var"), br() ),
                        conditionalPanel(condition="(input.headtab >= 1 && input.headtab <= 4) || (input.headtab == 6 && input.zero_or_not_sent == 61)",
+                                        strong("Filter by gear-loa-region-gsa:"),
                                         uiOutput("codsis"),
                                         uiOutput("codlft"),
+                                        uiOutput("regione"),
+                                        uiOutput("gsa"),
                                         actionButton("reset", "Reset filters"),
                                         br(),
-                                        br(),
-                                        br(),
                                         uiOutput("strato"),
+                                        uiOutput("ril"),
                                         br(),
                                         br()
                                         
@@ -87,8 +89,8 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                         downloadButton('download_not_sent', 'Download')),
                        br(),br(),
                        h5("Notes:"),
-                       verbatimTextOutput("perc_consegne_mensili"),
-                       verbatimTextOutput("perc_consegne_annuali"),
+                       #verbatimTextOutput("perc_consegne_mensili"),
+                       #verbatimTextOutput("perc_consegne_annuali"),
                        conditionalPanel(condition="input.headtab == 8",
                                         verbatimTextOutput("notes_on_fixing")) #textOutput("notes_on_fixing"))
                        ,textOutput("uti")
@@ -113,9 +115,10 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                             tabsetPanel(
                                               tabPanel("All", plotOutput("waterfall_plot_italy")),
                                               tabPanel("Grouped by strata", plotOutput("waterfall_plot_strata", height = 1000)),
-                                              tabPanel("Grouped by gear * LOA", plotOutput("waterfall_plot_gear_loa",height = 1000)),
                                               tabPanel("Grouped by gear", plotOutput("waterfall_plot_gear",height = 800)),
-                                              tabPanel("Grouped by LOA", plotOutput("waterfall_plot_loa",height = 800))
+                                              tabPanel("Grouped by LOA", plotOutput("waterfall_plot_loa",height = 800)),
+                                              tabPanel("Grouped by regione", plotOutput("waterfall_plot_regione",height = 800)),
+                                              tabPanel("Grouped by gear * LOA", plotOutput("waterfall_plot_gear_loa",height = 1000))  
                                             )
                                    ),
                                    

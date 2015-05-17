@@ -243,7 +243,52 @@ d_waterfall_gear_loa=reactive({
     waterfall
     
   }
-  
 })
 
-
+# waterfall per regione ####
+d_waterfall_regione=reactive({
+  
+  if( ok_rows() ){
+    
+    strata_in_d_panel=d_panel()[,unique(id_strato)]
+    
+    d_wat = 
+      if(input_apply_weights()==TRUE) 
+        d_panel()[var %in% c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro') , list(regione,var,value=value/pr_i) ]
+    else  
+      d_panel()[var %in% c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro') , list(regione,var,value) ]
+    
+    waterfall=CJ(var=c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor'), regione=d_panel()[,unique(regione)],value=as.numeric(0) )
+    setkey(waterfall, regione, var)
+    
+    waterfall_cost=d_wat[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum( value)) ), by=.(regione,var) ]
+    setkey(waterfall_cost, regione, var)
+    
+    waterfall_proflor=d_wat[var %in%  c('ricavi','carbur','alcova','spcom','spmanu','alcofi','lavoro'), list(value=as.numeric(sum(  ifelse(var=='ricavi',value,-value)  )), var='proflor'), keyby=.(regione) ][,list(regione,var,value)]
+    rm(d_wat)
+    setkey(waterfall_proflor, regione, var)
+    
+    waterfall[waterfall_cost,value:=i.value]
+    waterfall[waterfall_proflor,value:=i.value]
+    
+    o=data.table(var=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi'), o=c(1,2,3,4,5,6,7,8), key="var")
+    setkey(waterfall,var)
+    waterfall=waterfall[o]
+    setkey(waterfall, regione,o)
+    
+    waterfall[,end:=cumsum(value), keyby=.(regione)]
+    waterfall[,start:=end-value, keyby=.(regione)]
+    
+    # aggiungo yoy
+    waterfall[,yoy:=""]
+    yoy_temp=yoy[ id_strato %in% strata_in_d_panel ,list(yoy_value=sum(yoy_value)), keyby=.(regione,var)]
+    setkey(waterfall, regione,var)
+    waterfall[yoy_temp,  yoy:=paste0( ifelse(value/yoy_value<1,"-","+") , abs(round(100*(value/yoy_value-1)) ), "%")]
+    move_rect=waterfall[var=='ricavi',list(moveup=value/3), keyby=regione]
+    waterfall[move_rect,(c('end','start')):= list( end+moveup , start+moveup) ]
+    setkey(waterfall, o)
+    
+    waterfall
+    
+  }  
+})

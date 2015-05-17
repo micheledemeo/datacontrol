@@ -187,6 +187,14 @@ all[,ricavi:=NULL]
 rm(ricavi)
 #all[,value:=as.numeric(value)]
 
+# deriva elenco rilevatori ####
+ril_dt=all[,.N,keyby=id_rilevatore]
+ril_cognome=fread_mysql(tbname = 'rilevatori',integer64="character")[,list(id,cognome)]
+setnames(ril_cognome, 'id', 'id_rilevatore')
+setkey(ril_cognome, id_rilevatore)
+ril_dt=ril_cognome[ril_dt][,N:=NULL]
+rm(ril_cognome)
+
 # gestisci valori iniziali di value e parameter, in accordo con la hist ####
 # value_or è il valore originiale scaricato da server
 # value_ok è il valore finale su cui si fa l'espansione. esso comprende le imputazioni dell'utente

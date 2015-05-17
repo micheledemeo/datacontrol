@@ -31,17 +31,34 @@ strato_dt=all[,.N,keyby=.(descrizione,id_strato)]
 strato=strato_dt[,id_strato]
 strato=as.list(strato)
 names(strato)=strato_dt[,paste(descrizione,id_strato,sep="|@")]
+rm(strato_dt)
 codsis=all[,unique(codsis199)]
 codsis=codsis[order(codsis)]
 codlft=all[,unique(codlft199)]
 codlft=codlft[order(codlft)]
-str_sis_lft=all[,.N,by=list(id_strato,codsis199,codlft199)][,N:=NULL]
+regione=all[,unique(regione)]
+regione=regione[order(regione)]
+gsa=all[,unique(gsa)]
+gsa=gsa[order(gsa)]
+str_sis_lft_reg_gsa=all[,.N,by=list(id_strato,codsis199,codlft199,regione,gsa)][,N:=NULL]
+ril_strato=all[,.N,keyby=list(id_rilevatore,id_strato)][,N:=NULL]
+ril=as.list(ril_dt[,id_rilevatore])
+names(ril)=ril_dt[,paste(cognome,id_rilevatore,sep="  @")]
+rm(ril_dt)
 
 input_show_output=reactive({ input$show_output  })
 input_var=reactive({ input$var  })
 input_codsis=reactive({ input$codsis  })
 input_codlft=reactive({ input$codlft  })
 input_strato=reactive({ input$strato  })
+input_ril=reactive({ input$ril  })
+input_regione=reactive({ input$regione  })
+input_gsa=reactive({ input$gsa  })
+
+input_codsis_all=reactive({ if(is.null(input_codsis())) codsis else input_codsis()  })
+input_codlft_all=reactive({ if(is.null(input_codlft())) codlft else input_codlft()  })
+input_regione_all=reactive({ if(is.null(input_regione())) regione else input_regione()  })
+input_gsa_all=reactive({ if(is.null(input_gsa())) gsa else input_gsa()  })
 
 input_check_gio=reactive({ input$check_gio  })
 input_apply_weights=reactive({ input$apply_weights  })
