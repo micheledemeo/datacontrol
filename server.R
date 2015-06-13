@@ -136,10 +136,11 @@ shinyServer(function(input, output, session) {
     
   })
   
-  output$download_outliers_value = downloadHandler(   
-    filename = "outliers_abs.csv",
-    content = function(file) write.table( d_outliers_value(), file, sep=";",quote=F, na="",row.names = F)
-  )
+#  source( paste(getwd(), "source/download_shiny_objects.R", sep="/"),loc=T )
+#   output$download_outliers_value = downloadHandler(   
+#     filename = "outliers_abs.csv",
+#     content = function(file) write.table( d_outliers_value(), file, sep=";",quote=F, na="",row.names = F)
+#   )
   
   d_outliers_parameter=reactive({
 
@@ -260,7 +261,7 @@ shinyServer(function(input, output, session) {
     filename = "not_sent.csv",
     content = function(file) write.table( not_sent(), file, sep=";",quote=F, na="",row.names = F)
   )
-# imputation and upload process #####
+# imputation process #####
 source( paste(getwd(), "source/imputation.R", sep="/"),loc=T )
 observe({ if (input_freeze_data()=='yes') all[,(c('value','parameter')):=list(value_ok,parameter_ok)] else all[,(c('value','parameter')):=list(value_or,parameter_or)] })
 observe({ if (input_start_imputation()==0) updateRadioButtons(session, 'freeze_data', selected = 'no') })
@@ -283,9 +284,10 @@ observe({
   if (nrow(upload_data())>0 & input$upload_button==T) {
     withProgress(message = "Uploadig data to remote server:",{
       n=20
-      csv=upload_data()[,list(id_battello,var,hist_value=value_ok,hist_parameter=parameter_ok,hist_notes=notes)]
-      #write.table(csv, paste0(Sys.getenv("LOCALAPPDATA"),"\\Nicoda\\hist"), sep=";", quote = FALSE, na = "", row.names = F)
-      write.table(csv, paste(getwd(),"source/hist",sep="/"), sep=";", quote = FALSE, na = "", row.names = F)
+      csv=upload_data()[,list(id=.I,id_battello,var,day=Sys.Date(),year=strftime(Sys.Date(),"%Y"),pr_i=as.numeric(NA),hist_value=value_ok,hist_parameter=parameter_ok,hist_notes=notes,closing_session="open")]
+      if (!is.null(input$user_note_in_upload)) csv[,hist_notes:=paste0(hist_notes,"|",input$user_note_in_upload)]
+      write.table(csv, paste0(temp_dir_nicoda,"\\nicoda.csv"), sep=";", quote = FALSE, na = "", row.names = F,col.names = F)
+      ftp(action="put")
       pid=data.table(system("tasklist /V",intern = T))[grepl("127.0.0.1:12345",V1),V1]
       pid=regmatches(pid, regexpr("\\d+(?=\\s*Console)",pid,perl=T))
       for (i in 1:n) {
@@ -298,6 +300,7 @@ observe({
   }
   
 })
+
 observe ({ 
   input$headtab
   updateCheckboxInput(session, 'upload_button', value = F)

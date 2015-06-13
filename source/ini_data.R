@@ -198,11 +198,24 @@ rm(ril_cognome)
 # gestisci valori iniziali di value e parameter, in accordo con la hist ####
 # value_or è il valore originiale scaricato da server
 # value_ok è il valore finale su cui si fa l'espansione. esso comprende le imputazioni dell'utente
-# value è il campo usato nelle visualizzazioni grafiche. è pari a value_orig (default) se "Keep outliers in your charts", mentre diventa pari a value_ok quando "Take a tour with imputations"
-all[,c('value_ok','value_or','parameter_ok','parameter_or','is_ok','notes'):=list(value,value,parameter,parameter,0,"") ]
-#if( file.exists(paste0(Sys.getenv("LOCALAPPDATA"),"\\Nicoda\\hist") )) hist=fread( paste0(Sys.getenv("LOCALAPPDATA"),"\\Nicoda\\hist") ) else hist=data.table()
-if( file.exists(pastedir(wd,"source/hist")) ) hist=fread(pastedir(wd,"source/hist") ) else hist=data.table()
+# value è il campo usato nelle visualizzazioni grafiche. è pari a value_or (default) se "Keep outliers in your charts", mentre diventa pari a value_ok quando "Take a tour with imputations"
+
+all[,c('value_ok','value_or','parameter_ok','parameter_or','is_ok','hist_is_ok','notes'):=list(value,value,parameter,parameter,0,as.numeric(NA),"") ]
+
+# verifico se c'è un nicoda in ftp (faccio il get e verifico se esiste in locale)), quindi lo importo e aggiorno all (in tal caso infatti nicoda.csv è più recente di dati in tabella). 
+# Se non c'è in ftp, importo da db e aggiorno all
+ftp(action = "get")
+if( file.exists(paste0(temp_dir_nicoda,"\\nicoda.csv")) && length(readLines(paste0(temp_dir_nicoda,"\\nicoda.csv"),n = 1))>0 ) {
+  hist=fread( paste0(temp_dir_nicoda,"\\nicoda.csv") , sep=";")
+  setnames(hist, names(hist), c('id','id_battello','var','day','year','pr_i','hist_value','hist_parameter','hist_notes','closing_session'))
+  
+} else {
+  hist=fread_mysql(tbname = 'nicoda')
+}
+
 if(nrow(hist)>0){
+  hist=hist[,list(id_battello,var,hist_value,hist_parameter,hist_notes,closing_session)]
+  hist[,c('id_battello','var','hist_value','hist_parameter','hist_notes','closing_session'):=list(as.integer(id_battello),as.character(var),as.numeric(hist_value),as.numeric(hist_parameter),as.character(hist_notes),as.character(closing_session))]
   setkey(hist, id_battello,var)
   setkey(all, id_battello,var)
   hist[,hist_parameter:=as.numeric(hist_parameter)]

@@ -12,7 +12,10 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                    
                    sidebarLayout(
                      sidebarPanel(
-                       conditionalPanel(condition="input.headtab==9",checkboxInput("upload_button", "UPLOAD OF IMPUTATION", value=F)),
+                       conditionalPanel(condition="input.headtab==9",
+                                        checkboxInput("upload_button", "UPLOAD OF IMPUTATION", value=F),
+                                        textInput(inputId = "user_note_in_upload",label = "Add a note to every record")
+                                        ),
                        conditionalPanel(condition="input.headtab >= 1 && input.headtab <= 4",
                                         verbatimTextOutput("version_nr"),
                                         radioButtons("show_output", label = 'Choose if:',
@@ -91,7 +94,7 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                        h5("Notes:"),
                        #verbatimTextOutput("perc_consegne_mensili"),
                        #verbatimTextOutput("perc_consegne_annuali"),
-                       conditionalPanel(condition="input.headtab == 8",
+                       conditionalPanel(condition="input.headtab == 8 | input.headtab == 9",
                                         verbatimTextOutput("notes_on_fixing")) #textOutput("notes_on_fixing"))
                        ,textOutput("uti")
                      ),
