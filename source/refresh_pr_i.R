@@ -22,5 +22,23 @@ if(length(strati_censimento) >0) {
 pr_i_temp=pr_i_temp[,list(id_battello,pr_i)]
 # aggiungo censimenti
 if(length(strati_censimento)>0) pr_i_temp=rbindlist(list(pr_i_temp,flotta_temp[id_strato %in% strati_censimento,.(id_battello, pr_i=1)]))
-setkey(pr_i_temp, id_battello)
 
+# calcolo fattore di correzione
+if ( exists("cy") ) {
+  setkey(cy,id_strato)
+  ric=all[var=="ricavi", list(id_battello,id_strato,value)]
+  setkey(ric,id_battello)
+  setkey(pr_i_temp,id_battello)
+  ric=pr_i_temp[ric][,ric_esp_nisea:=sum(value/pr_i),by=id_strato]
+  setkey(ric,id_strato)
+  ric=cy[ric]
+  ric[is.na(ricavi), ricavi:=ric_esp_nisea] # corr_fact will be 1 for that
+  ric[,corr_fact:=ricavi/ric_esp_nisea]
+  setkey(ric,id_battello)
+  # weight_with_correction = weight * corr_fact = 1/pr * corr_fact --> 
+  # pr_with_correction= 1 / weight_with_correction  = 1/(1/pr * corr_fact) = pr / corr_fact
+  pr_i_temp[ric, pr_i:=pr_i*(1/corr_fact)]
+  rm(ric)
+}
+
+setkey(pr_i_temp, id_battello)

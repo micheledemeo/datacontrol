@@ -15,6 +15,10 @@ bat_ril=bat_ril[ all[,list(id_battello,id_strato)] ]
 # crea flotta per calcolo pesi
 flotta=fread(pastedir(wd,"source/flotta"))
 
+if ( file.exists(pastedir(wd,"source/data_current_year")) ) {
+  cy=fread(pastedir(wd,"source/data_current_year"))
+}
+
 if ( nrow(all[lft==0])>0 ) {
   all2=all[lft==0]
   setkey(all2, numero_ue)

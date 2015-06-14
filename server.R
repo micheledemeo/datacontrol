@@ -2,7 +2,7 @@
 # library(shiny)
 # runApp("C:/Users/mdemeo/Documents/000/datacontrol",port = 12345,quiet = T)
 #options(shiny.trace=T)
-#sink( "C:/Users/mdemeo/Documents/000/datacontrol/log.log" )
+sink( paste0(Sys.getenv("LOCALAPPDATA"),"\\Nicoda\\session.log") )
 
 shinyServer(function(input, output, session) {
   
