@@ -5,11 +5,6 @@ require(data.table)
 require(reshape2)
 require(ggplot2)
 
-# crea nicoda temp dir
-temp_dir_nicoda=paste0(Sys.getenv("LOCALAPPDATA"),"\\Nicoda")
-unlink(temp_dir_nicoda, recursive = T, force = T)
-dir.create(temp_dir_nicoda)
-
 sum2=function(...,na.rm=T) sum(...,na.rm=na.rm)
 
 # startup functions ####

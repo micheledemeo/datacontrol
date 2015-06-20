@@ -211,7 +211,7 @@ all[,c('value_ok','value_or','parameter_ok','parameter_or','is_ok','hist_is_ok',
 ftp(action = "get")
 if( file.exists(paste0(temp_dir_nicoda,"\\nicoda.csv")) && length(readLines(paste0(temp_dir_nicoda,"\\nicoda.csv"),n = 1))>0 ) {
   hist=fread( paste0(temp_dir_nicoda,"\\nicoda.csv") , sep=";")
-  setnames(hist, names(hist), c('id','id_battello','var','day','year','pr_i','hist_value','hist_parameter','hist_notes','closing_session'))
+  setnames(hist, names(hist), c('id_battello','var','day','year','pr_i','hist_value','hist_parameter','hist_notes','closing_session'))
   
 } else {
   hist=fread_mysql(tbname = 'nicoda')

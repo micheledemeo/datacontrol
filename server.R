@@ -3,6 +3,11 @@
 # runApp("C:/Users/mdemeo/Documents/000/datacontrol",port = 12345,quiet = T)
 #options(shiny.trace=T)
 
+# crea nicoda temp dir
+temp_dir_nicoda=paste0(Sys.getenv("LOCALAPPDATA"),"\\Nicoda")
+unlink(temp_dir_nicoda, recursive = T, force = T)
+dir.create(temp_dir_nicoda)
+
 shinyServer(function(input, output, session) {
   
   # data import from mysql with a fake progress bar ####
@@ -59,12 +64,15 @@ shinyServer(function(input, output, session) {
   observe({ if( input_check_gio()==1 ) updateCheckboxInput( session, "not_sent_as_0", value = 0) })
   
   selected_strata=reactive({ 
-    
     if (  !is.null( input_strato() ) ) as.numeric(input_strato())
     else if ( !is.null( input_ril() ) ) ril_strato[.(input_ril()), unique(id_strato) ]
     else str_sis_lft_reg_gsa[codsis199 %in%  input_codsis_all() & codlft199 %in%  input_codlft_all() & regione %in% input_regione_all() & gsa %in% input_gsa_all(),
                              unique(id_strato)]
-    
+  })
+  
+  selected_strata_in_imp=reactive({ 
+    if (  !is.null( input_strato_imp() ) ) as.numeric(input_strato_imp())
+    else str_sis_lft_reg_gsa[codsis199 %in%  input_codsis_imp() & codlft199 %in%  input_codlft_imp(), unique(id_strato)]
   })
   
   # d_panel ####
@@ -262,11 +270,27 @@ shinyServer(function(input, output, session) {
   )
 # imputation process #####
 source( paste(getwd(), "source/imputation.R", sep="/"),loc=T )
+  
 observe({ if (input_freeze_data()=='yes') all[,(c('value','parameter')):=list(value_ok,parameter_ok)] else all[,(c('value','parameter')):=list(value_or,parameter_or)] })
+
 observe({ if (input_start_imputation()==0) updateRadioButtons(session, 'freeze_data', selected = 'no') })
+
 upload_data=reactive({
   input$headtab # con questo forzo il refresh alla variazione del tab attivo, così in upload tab ho sempre una visualizzazioe aggiornata
-  all[is_ok==1 & grepl(session_info, notes,fixed = T) ,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,value_ok,value_or,parameter_ok,notes)]
+  
+  up=all[is_ok==1 & grepl(session_info, notes,fixed = T) ,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,value_ok,value_or,parameter_ok,notes)]
+  setkey(up,id_battello)
+  up=pr_i[up]
+  up[is.na(pr_i), pr_i:=0] # qui non metto inf perché poi salvo nel db
+  
+  # refresh di pr_i
+  if( input_not_sent_as_0()==1 ) {
+    # genero il pr_i_temp per il refresh dei soli strati selezionai in imputation
+    setkey(up, id_battello)
+    up[pr_i_temp, pr_i:=i.pr_i, nomatch=0]
+    rm(pr_i_temp) 
+  }
+  up
 })
 observe({  
   if (input_freeze_data()=='yes' & input_start_imputation()==1) {    
@@ -278,12 +302,12 @@ observe({
     updateSelectInput(session, 'codlft',selected = input_codlft_imp() )
   } 
 })
-# data upload with button ####
+# imputation upload with button ####
 observe({ 
   if (nrow(upload_data())>0 & input$upload_button==T) {
     withProgress(message = "Uploadig data to remote server:",{
       n=20
-      csv=upload_data()[,list(id=.I,id_battello,var,day=Sys.Date(),year=strftime(Sys.Date(),"%Y"),pr_i=as.numeric(NA),hist_value=value_ok,hist_parameter=parameter_ok,hist_notes=notes,closing_session="open")]
+      csv=upload_data()[,list(id_battello,var,day=Sys.Date(),year=strftime(Sys.Date(),"%Y"),pr_i=round(pr_i,8),hist_value=value_ok,hist_parameter=parameter_ok,hist_notes=notes,closing_session="open")]
       if (!is.null(input$user_note_in_upload)) csv[,hist_notes:=paste0(hist_notes,"|",input$user_note_in_upload)]
       write.table(csv, paste0(temp_dir_nicoda,"\\nicoda.csv"), sep=";", quote = FALSE, na = "", row.names = F,col.names = F)
       ftp(action="put")
@@ -340,7 +364,7 @@ output$notes_on_fixing=renderText({
     out
   
   })
-output$upload_dt = renderDataTable({ upload_data()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,imputation_value=value_ok,original_value=value_or,notes)] })
+output$upload_dt = renderDataTable({ upload_data()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,imputation_value=value_ok,original_value=value_or,pr_i,notes)] })
 output$version_nr=renderText({ "0.1.88" })
 #output$uti=renderText({ input_data_type() })  
   
