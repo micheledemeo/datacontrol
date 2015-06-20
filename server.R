@@ -330,7 +330,7 @@ observe ({
   if (input_show_output()=='orig_data' & input_start_imputation()==1) updateCheckboxGroupInput(session,'freeze_data',selected = 'no')
 })
 
-
+observe ({ if (input$headtab==4)  updateCheckboxInput(session, 'apply_weights', value = T)   })
 
 # objects to show in output ####
   output$table_outliers_value = renderDataTable({d_outliers_value()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,original_value=value_or,is_ok,final_value=ifelse(is_ok==1,value_ok,NA))]})
@@ -365,7 +365,7 @@ output$notes_on_fixing=renderText({
   
   })
 output$upload_dt = renderDataTable({ upload_data()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,imputation_value=value_ok,original_value=value_or,pr_i,notes)] })
-output$version_nr=renderText({ "0.1.88" })
+output$version_nr=renderText({ "0.1.94" })
 #output$uti=renderText({ input_data_type() })  
   
 }) #shinyServer

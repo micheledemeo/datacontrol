@@ -45,7 +45,7 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                        conditionalPanel(condition="(input.headtab <=6 | (input.headtab ==8 & input.start_imputation==0) ) & !(input.headtab == 6 && input.zero_or_not_sent == 62)", 
                                         checkboxInput(inputId = "check_gio",label = "Days at sea > 0", value=F)
                        ),
-                       conditionalPanel(condition="input.headtab == 3 || input.headtab == 4", 
+                       conditionalPanel(condition="input.headtab == 3", 
                                         checkboxInput(inputId = "apply_weights",label = "Apply weights", value=T)
                        ),
                        conditionalPanel(condition="( (input.headtab >= 1 & input.headtab <= 4) | (input.headtab ==8 & input.start_imputation==0) ) & input.check_gio==0", 
@@ -146,6 +146,13 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                    ),
                                    tabPanel("Upload of imputations", value = 9,
                                             dataTableOutput("upload_dt")
+                                   ),
+                                   tabPanel("Closing sessions", value = 10,
+                                            tabsetPanel(
+                                              tabPanel("Close or open a strata"),
+                                              tabPanel("Closed strata"),
+                                              tabPanel("Imputations of prev sessions")
+                                            )
                                    )
                        )
                        
