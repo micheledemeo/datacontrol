@@ -121,6 +121,7 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                               tabPanel("Grouped by gear", plotOutput("waterfall_plot_gear",height = 800)),
                                               tabPanel("Grouped by LOA", plotOutput("waterfall_plot_loa",height = 800)),
                                               tabPanel("Grouped by regione", plotOutput("waterfall_plot_regione",height = 800)),
+                                              tabPanel("Grouped by gsa", plotOutput("waterfall_plot_gsa",height = 800)),
                                               tabPanel("Grouped by gear * LOA", plotOutput("waterfall_plot_gear_loa",height = 1000))  
                                             )
                                    ),
