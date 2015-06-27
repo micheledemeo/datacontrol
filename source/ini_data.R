@@ -69,11 +69,9 @@ d_mensili=d_mensili[anno==2014]
 control_var_mensili=d_mensili[,list(giorni_mare=sum2(giorni_mare),equipaggio_medio=ifelse(sum2(giorni_mare)==0,mean(equipaggio_medio),sum2(equipaggio_medio*giorni_mare)/sum2(giorni_mare)) ,volume_carburante=sum2(volume_carburante+volume_lubrificante) ),keyby=.(id_battello)]
 vars=fread(pastedir(wd,"source/vars_schede_mensili"),header = F)
 vars=c("id_battello","mensilita",vars$V1)
-# salvo info su parte o fisso per monte
-parte_fisso=d_mensili[,list(id_battello,remunerazione_costo_lavoro)]
-parte_fisso=parte_fisso[,.N,keyby=.(id_battello,remunerazione_costo_lavoro)]
-setkey(parte_fisso, id_battello,N)
-parte_fisso=parte_fisso[.(unique(id_battello)), mult="last"][,N:=NULL]
+# salvo info su percentuale_alla_parte
+parte_fisso=d_mensili[percentuale_alla_parte>0,list(id_battello,percentuale_alla_parte)]
+parte_fisso=parte_fisso[,list(percentuale_alla_parte=mean(percentuale_alla_parte)),keyby=.(id_battello)]
 d_mensili=d_mensili[,vars,with=F]
 
 # prepara dati per calcolo consegne mensili ####
@@ -130,18 +128,29 @@ d_annuali[is.na(value), value:=0]
 d=rbindlist(list(d_mensili,d_annuali))
 rm(d_mensili,d_annuali)
 
-# monte e stima retribuzione_lorda (a cui poi si aggiungono oneri sociali, irpef, inail per ottenere lavoro)
+# monte e stima retribuzione_lorda (a cui poi si aggiungono oneri sociali, irpef, inail per ottenere lavoro, mediante join con aggrega_var)
 setkey(d, variable)
 var_per_monte=c('costo_carburante','costo_lubrificante','diritti_mercato_ittico','provvigioni_grossista','provvigioni_astatore','facchinaggio_prodotti_ittici','spese_per_automezzi','spese_per_ghiaccio','cassette_e_imballaggio','altri_costi','riparazione_reti', 'spese_panatica_di_bordo','acquisto_esche','spese_telefonia_di_bordo','spese_tv_di_bordo','valore_totale')
-stima_retribuzione_lorda=d[.(var_per_monte)][variable!='valore_totale',value:=-value][,list(ret_lor=sum(value)/2),keyby=id_battello]
-stima_retribuzione_lorda[, ret_lor:=as.integer(round(ret_lor,0))]
-stima_retribuzione_lorda[ret_lor<0, ret_lor:=0]
+stima_retribuzione_lorda=d[.(var_per_monte)][variable!='valore_totale',value:=-value][,list(monte=sum(value)),keyby=id_battello]
+stima_retribuzione_lorda[monte<0, monte:=0]
+temp=all[var=="lavoro",list(id_battello,id_strato)]
+setkey(temp, id_battello)
+setkey(parte_fisso, id_battello)
+parte_fisso=parte_fisso[temp]
+rm(temp)
+parte_fisso[,percentuale_alla_parte:=mean(percentuale_alla_parte,na.rm = T), keyby=id_strato]
+parte_fisso[is.na(percentuale_alla_parte),percentuale_alla_parte:=50]
+parte_fisso=parte_fisso[,list(id_battello,percentuale_alla_parte=round(percentuale_alla_parte/100,2))]
+setkey(parte_fisso, id_battello)
+stima_retribuzione_lorda=parte_fisso[stima_retribuzione_lorda]
+stima_retribuzione_lorda[is.na(percentuale_alla_parte), percentuale_alla_parte:=.5]
+stima_retribuzione_lorda=stima_retribuzione_lorda[, ret_lor:=as.integer(round(percentuale_alla_parte*monte,0))][,list(id_battello, ret_lor)]
 setkey(d, id_battello)
+setkey(stima_retribuzione_lorda, id_battello)
 d=stima_retribuzione_lorda[d]
-setkey(parte_fisso,id_battello)
-d=parte_fisso[d]
-d[ variable=='retribuzioni_lorde' & !is.na(ret_lor) & ( remunerazione_costo_lavoro=='P'| is.na(remunerazione_costo_lavoro) ) ,value:=ret_lor ]
-d[,c('remunerazione_costo_lavoro','ret_lor'):=NULL]
+d[ variable=='retribuzioni_lorde' ,value:=ret_lor ]
+d[,ret_lor:=NULL]
+rm(stima_retribuzione_lorda,parte_fisso)
 
 # aggrega in macro voci di costo ####
 setkey(d, variable)
