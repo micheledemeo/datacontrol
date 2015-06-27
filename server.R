@@ -295,7 +295,7 @@ observe({ if (input_start_imputation()==0) updateRadioButtons(session, 'freeze_d
 upload_data=reactive({
   input$headtab # con questo forzo il refresh alla variazione del tab attivo, così in upload tab ho sempre una visualizzazioe aggiornata
   
-  up=all[is_ok==1 & grepl(session_info, notes,fixed = T) ,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,value_ok,value_or,parameter_ok,notes)]
+  up=all[is_ok==1,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,value_ok,value_or,parameter_ok,notes)]
   setkey(up,id_battello)
   up=pr_i[up]
   up[is.na(pr_i), pr_i:=0] # qui non metto inf perché poi salvo nel db
@@ -321,7 +321,7 @@ observe({
 })
 # imputation upload with button ####
 observe({ 
-  if (nrow(upload_data())>0 & input$upload_button==T) {
+  if (nrow(upload_data()[grepl(session_info, notes,fixed = T)])>0 & input$upload_button==T) {
     withProgress(message = "Uploadig data to remote server:",{
       n=20
       csv=upload_data()[,list(id_battello,var,day=Sys.Date(),year=strftime(Sys.Date(),"%Y"),pr_i=round(pr_i,8),hist_value=value_ok,hist_parameter=parameter_ok,hist_notes=notes,closing_session="open")]
@@ -381,7 +381,7 @@ output$notes_on_fixing=renderText({
     out
   
   })
-output$upload_dt = renderDataTable({ upload_data()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,imputation_value=value_ok,original_value=value_or,pr_i,notes)] })
+output$upload_dt = renderDataTable({ upload_data()[grepl(session_info, notes,fixed = T),.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,imputation_value=value_ok,original_value=value_or,pr_i,notes)] })
 output$version_nr=renderText({ "0.1.94" })
 #output$uti=renderText({ input_data_type() })  
   
