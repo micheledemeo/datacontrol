@@ -128,6 +128,11 @@ d_annuali[is.na(value), value:=0]
 d=rbindlist(list(d_mensili,d_annuali))
 rm(d_mensili,d_annuali)
 
+# fak ####
+################################################################################################
+source( paste(wd, "source/ricavi_fak.R", sep="/"),loc=T )
+################################################################################################
+
 # monte e stima retribuzione_lorda (a cui poi si aggiungono oneri sociali, irpef, inail per ottenere lavoro, mediante join con aggrega_var)
 setkey(d, variable)
 var_per_monte=c('costo_carburante','costo_lubrificante','diritti_mercato_ittico','provvigioni_grossista','provvigioni_astatore','facchinaggio_prodotti_ittici','spese_per_automezzi','spese_per_ghiaccio','cassette_e_imballaggio','altri_costi','riparazione_reti', 'spese_panatica_di_bordo','acquisto_esche','spese_telefonia_di_bordo','spese_tv_di_bordo','valore_totale')
