@@ -382,7 +382,7 @@ output$notes_on_fixing=renderText({
   
   })
 output$upload_dt = renderDataTable({ upload_data()[grepl(session_info, notes,fixed = T),.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,imputation_value=value_ok,original_value=value_or,pr_i,notes)] })
-output$version_nr=renderText({ "0.1.94" })
+output$version_nr=renderText({ "0.2.100" })
 #output$uti=renderText({ input_data_type() })  
   
 }) #shinyServer
