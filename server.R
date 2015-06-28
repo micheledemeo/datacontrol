@@ -303,9 +303,9 @@ upload_data=reactive({
   # refresh di pr_i
   if( input_not_sent_as_0()==1 ) {
     # genero il pr_i_temp per il refresh dei soli strati selezionai in imputation
+    source( paste(getwd(), "source/refresh_pr_i_imp.R", sep="/"),loc=T )
     setkey(up, id_battello)
     up[pr_i_temp, pr_i:=i.pr_i, nomatch=0]
-    rm(pr_i_temp) 
   }
   up
 })
@@ -325,7 +325,7 @@ observe({
     withProgress(message = "Uploadig data to remote server:",{
       n=20
       csv=upload_data()[,list(id_battello,var,day=Sys.Date(),year=strftime(Sys.Date(),"%Y"),pr_i=round(pr_i,8),hist_value=value_ok,hist_parameter=parameter_ok,hist_notes=notes,closing_session="open")]
-      if (!is.null(input$user_note_in_upload)) csv[ grepl(session_info, notes,fixed = T) ,hist_notes:=paste0(hist_notes,"|",input$user_note_in_upload)]
+      if (!is.null(input$user_note_in_upload)) csv[ grepl(session_info, hist_notes,fixed = T) ,hist_notes:=paste0(hist_notes,"|",input$user_note_in_upload)]
       write.table(csv, paste0(temp_dir_nicoda,"\\nicoda.csv"), sep=";", quote = FALSE, na = "", row.names = F,col.names = F)
       ftp(action="put")
       pid=data.table(system("tasklist /V",intern = T))[grepl("127.0.0.1:12345",V1),V1]
