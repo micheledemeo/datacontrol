@@ -2,6 +2,7 @@
 # waterfall italy ####
 d_waterfall_italy=reactive({
   
+  
   if( ok_rows() ){
     
     strata_in_d_panel=d_panel()[,unique(id_strato)]

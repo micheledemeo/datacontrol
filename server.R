@@ -24,7 +24,11 @@ shinyServer(function(input, output, session) {
   output$var_imp=renderUI({  selectInput("var_imp", label = "Select the variables:", choices =var, selected = var, multiple = T ) })
   output$codsis_imp=renderUI({selectInput("codsis_imp", label = "Apply a filter on gear type:", choices =codsis, selected = codsis, multiple = T ) })
   output$codlft_imp=renderUI({ selectInput("codlft_imp", label = "Apply a filter on LOA:", choices =codlft, selected = codlft, multiple = T ) })  
-  output$strato_imp=renderUI({ selectInput("strato_imp", label = "Select the strata:", choices =strato, selected = NULL, multiple = T ) })   
+  output$strato_imp=renderUI({ selectInput("strato_imp", label = "Select the strata:", choices =strato, selected = NULL, multiple = T ) })
+  # UI for imputation manual
+  output$var_imp_m=renderUI({  selectInput("var_imp_m", label = "Variables:", choices =var_imp_m, selected = var, multiple = T ) })
+  output$strato_imp_m=renderUI({ selectInput("strato_imp_m", label = "Strata:", choices =strato, selected = NULL, multiple = T ) })
+  output$id_battello_imp_m=renderUI({ selectInput("id_battello_imp_m", label = "id_battello:", choices =id_battello_imp_m, selected = NULL, multiple = T ) })
   
   observe({ if (!is.null(input_codsis_imp()) | !is.null(input_codlft_imp())  ) updateSelectInput(session, "strato_imp", choices =strato, selected = NULL) })
   observe({ 
@@ -80,20 +84,23 @@ shinyServer(function(input, output, session) {
   d_panel=reactive({ 
     
    input_freeze_data()
+   input_slider_imp_m()
+   
    if (input_show_output()=='orig_data') all[,(c('value','parameter')):=list(value_or,parameter_or)] else all[,(c('value','parameter')):=list(value_ok,parameter_ok)]
     
     d_panel=if (  !is.null( input_strato() ) ) all[giorni_mare>(input_check_gio()-1) & id_strato %in% input_strato() ]
     else if ( !is.null( input_ril() ) ) all[giorni_mare>(input_check_gio()-1) & id_rilevatore %in% input_ril() ]
     else all[giorni_mare>(input_check_gio()-1) & codsis199 %in% input_codsis_all() & codlft199 %in%  input_codlft_all() & regione %in% input_regione_all() & gsa %in% input_gsa_all()]
     
-    if( input_not_sent_as_0()==0 ) d_panel=d_panel[sent==1]
-    
     setkey(d_panel,id_battello)
     d_panel=pr_i[d_panel]
     d_panel[is.na(pr_i), pr_i:=Inf]
     
-    # refresh di pr_i
-    if( input_not_sent_as_0()==1 ) {
+    if( input_not_sent_as_0()==0 ) {
+      d_panel=d_panel[sent==1]
+      
+    } else { # input_not_sent_as_0()==1 quindi refresh pr_i
+      
       # genero il pr_i_temp per il refresh dei soli strati selezionai
       source( paste(getwd(), "source/refresh_pr_i.R", sep="/"),loc=T )      
       # join con d_panel e update di pr_i ####
@@ -292,23 +299,6 @@ observe({ if (input_freeze_data()=='yes') all[,(c('value','parameter')):=list(va
 
 observe({ if (input_start_imputation()==0) updateRadioButtons(session, 'freeze_data', selected = 'no') })
 
-upload_data=reactive({
-  input$headtab # con questo forzo il refresh alla variazione del tab attivo, così in upload tab ho sempre una visualizzazioe aggiornata
-  
-  up=all[is_ok==1,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,value_ok,value_or,parameter_ok,notes)]
-  setkey(up,id_battello)
-  up=pr_i[up]
-  up[is.na(pr_i), pr_i:=0] # qui non metto inf perché poi salvo nel db
-  
-  # refresh di pr_i
-  if( input_not_sent_as_0()==1 ) {
-    # genero il pr_i_temp per il refresh dei soli strati selezionai in imputation
-    source( paste(getwd(), "source/refresh_pr_i_imp.R", sep="/"),loc=T )
-    setkey(up, id_battello)
-    up[pr_i_temp, pr_i:=i.pr_i, nomatch=0]
-  }
-  up
-})
 observe({  
   if (input_freeze_data()=='yes' & input_start_imputation()==1) {    
     if (input_abs_or_mean_in_fix()=="abs-outliers") updateTabsetPanel(session, "headtab" ,selected = '1') else updateTabsetPanel(session, "headtab" ,selected = '2')
@@ -319,27 +309,62 @@ observe({
     updateSelectInput(session, 'codlft',selected = input_codlft_imp() )
   } 
 })
-# imputation upload with button ####
+
+# update of manual imputation tab if imputation is selected  ####
+observe({ if (input$headtab==8) { 
+  updateSelectInput(session, 'slider_imp_m',selected = 0 ) 
+  updateSelectInput(session, 'abs_imp_m',selected = 0 )
+  updateSelectInput(session, 'strato_imp_m',selected = NA )
+  updateSelectInput(session, 'id_battello_imp_m',selected = NA )
+  } 
+  })
+# update of imputation tab if manual imputation is selected ####
+observe({  if (input$headtab==9) updateCheckboxInput( session, "start_imputation", value = 0) })
+
+
+# imputation upload with button and nicoda restart ####
 observe({ 
-  if (nrow(upload_data()[grepl(session_info, notes,fixed = T)])>0 & input$upload_button==T) {
+  if (nrow(all[grepl(session_info, notes,fixed = T)])>0 & input$upload_button==T) {
     withProgress(message = "Uploadig data to remote server:",{
       n=20
-      csv=upload_data()[,list(id_battello,var,day=Sys.Date(),year=strftime(Sys.Date(),"%Y"),pr_i=round(pr_i,8),hist_value=value_ok,hist_parameter=parameter_ok,hist_notes=notes,closing_session="open")]
-      if (!is.null(input$user_note_in_upload)) csv[ grepl(session_info, hist_notes,fixed = T) ,hist_notes:=paste0(hist_notes,"|",input$user_note_in_upload)]
-      write.table(csv, paste0(temp_dir_nicoda,"\\nicoda.csv"), sep=";", quote = FALSE, na = "", row.names = F,col.names = F)
+      
+      up=all[is_ok==1,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,value_ok,value_or,parameter_ok,notes)]
+      setkey(up,id_battello)
+      up=pr_i[up]
+      up[is.na(pr_i), pr_i:=0] # qui non metto inf perché poi salvo nel db
+      
+      # refresh di pr_i
+      if( input_not_sent_as_0()==1 ) {
+        # genero il pr_i_temp per il refresh dei soli strati selezionai in imputation o manual imputation
+        if (input$headtab==8) {
+          source( paste(getwd(), "source/refresh_pr_i_imp.R", sep="/"),loc=T )
+        } else if(input$headtab==9) {
+          source( paste(getwd(), "source/refresh_pr_i_imp_m.R", sep="/"),loc=T )
+        }
+        
+        setkey(up, id_battello)
+        up[pr_i_temp, pr_i:=i.pr_i, nomatch=0]
+      } # if( input_not_sent_as_0()==1 )
+      
+      up=up[,list(id_battello,var,day=Sys.Date(),year=strftime(Sys.Date(),"%Y"),pr_i=round(pr_i,8),hist_value=value_ok,hist_parameter=parameter_ok,hist_notes=notes,closing_session="open")]
+      write.table(up, paste0(temp_dir_nicoda,"\\nicoda.csv"), sep=";", quote = FALSE, na = "", row.names = F,col.names = F)
       ftp(action="put")
+      if (input$headtab==8)  updateTabsetPanel(session, "headtab" ,selected = 9) else updateTabsetPanel(session, "headtab" ,selected = 8)
       pid=data.table(system("tasklist /V",intern = T))[grepl("127.0.0.1:12345",V1),V1]
       pid=regmatches(pid, regexpr("\\d+(?=\\s*Console)",pid,perl=T))
       for (i in 1:n) {
         incProgress(1/n, detail =  sample(9000:70000,1) )
         Sys.sleep(.1)
-      }
+       }
     }) # withProgress     
-    system(paste("taskkill /pid",pid))
-    browseURL("http://127.0.0.1:12345/")
+     system(paste("taskkill /pid",pid))
+     browseURL("http://127.0.0.1:12345/")
   }
   
 })
+
+# manual imputation process #####
+source( paste(getwd(), "source/imputation_manual.R", sep="/"),loc=T )
 
 observe ({ 
   input$headtab
@@ -381,8 +406,7 @@ output$notes_on_fixing=renderText({
     out
   
   })
-output$upload_dt = renderDataTable({ upload_data()[grepl(session_info, notes,fixed = T),.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,imputation_value=value_ok,original_value=value_or,pr_i,notes)] })
-output$version_nr=renderText({ "0.2.100" })
-#output$uti=renderText({ input_data_type() })  
+output$version_nr=renderText({ '0.2.100' }) # 
+#output$uti=renderText({ input_id_battello_in_imp_m() })  
   
 }) #shinyServer

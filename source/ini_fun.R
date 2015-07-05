@@ -1,3 +1,8 @@
+# redundant: # crea nicoda temp dir
+temp_dir_nicoda=paste0(Sys.getenv("LOCALAPPDATA"),"\\Nicoda")
+unlink(temp_dir_nicoda, recursive = T, force = T)
+dir.create(temp_dir_nicoda)
+
 # inizialization for wd and libraries
 session_info=paste(Sys.info()['nodename'], Sys.info()['user'], strftime(Sys.time(),"%Y-%m-%d-%X"), sep="|")
 require(shiny)

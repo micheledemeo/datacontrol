@@ -13,7 +13,7 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                    sidebarLayout(
                      sidebarPanel(
                        verbatimTextOutput("version_nr"),
-                       conditionalPanel(condition="input.headtab==9",
+                       conditionalPanel(condition="input.headtab==10 & input.tabset_close_sessions==104",
                                         checkboxInput("upload_button", "UPLOAD OF IMPUTATION", value=F),
                                         textInput(inputId = "user_note_in_upload",label = "Add a note to every record")
                                         ),
@@ -42,13 +42,13 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                         uiOutput("codsis_imp"),
                                         uiOutput("codlft_imp")
                        ),
-                       conditionalPanel(condition="(input.headtab <=6 | (input.headtab ==8 & input.start_imputation==0) ) & !(input.headtab == 6 && input.zero_or_not_sent == 62)", 
+                       conditionalPanel(condition="((input.headtab <=6 | (input.headtab ==8 & input.start_imputation==0) ) & !(input.headtab == 6 && input.zero_or_not_sent == 62)) | input.headtab ==9", 
                                         checkboxInput(inputId = "check_gio",label = "Days at sea > 0", value=F)
                        ),
                        conditionalPanel(condition="input.headtab == 3", 
                                         checkboxInput(inputId = "apply_weights",label = "Apply weights", value=T)
                        ),
-                       conditionalPanel(condition="( (input.headtab >= 1 & input.headtab <= 4) | (input.headtab ==8 & input.start_imputation==0) ) & input.check_gio==0", 
+                       conditionalPanel(condition="( (input.headtab >= 1 & input.headtab <= 4) | (input.headtab ==8 & input.start_imputation==0) | input.headtab == 9 ) & input.check_gio==0", 
                                         checkboxInput(inputId = "not_sent_as_0",label = "Not-sent as zero-values", value=F)
                        ),                     
                        conditionalPanel(condition="input.headtab== 8 & input.start_imputation==0",
@@ -81,6 +81,19 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                        conditionalPanel(condition="input.headtab == 8 & input.start_imputation==1 & input.keep_accept_refuse_outliers == 'refuse'",
                                         radioButtons("freeze_data", label = "Freeze data with imputations",
                                                      choices = list("Take a tour with imputations" = 'yes', "Keep outliers in your charts" = 'no'), selected = 'no')
+                       ),
+                       conditionalPanel(condition="input.headtab == 8 & input.start_imputation==1 & input.keep_accept_refuse_outliers != 'keep' & input.freeze_data=='no'",
+                                        checkboxInput("upload_button", "UPLOAD OF IMPUTATION", value=F)
+                       ),
+                       conditionalPanel(condition="input.headtab == 9",
+                                        uiOutput("var_imp_m"),
+                                        uiOutput("strato_imp_m"),
+                                        uiOutput("id_battello_imp_m"),
+                                        radioButtons("imputation_manual_method", label = "Choose the method",
+                                                     choices = list("% change" = 'pc_change', "abs change" = 'abs_change'), selected = 'pc_change'),
+                                        conditionalPanel(condition="input.imputation_manual_method=='pc_change'", sliderInput("slider_imp_m",label = "% change of the original value",min = -100,max=300,value=0)),
+                                        conditionalPanel(condition="input.imputation_manual_method=='abs_change'", numericInput("abs_imp_m", "abs change of the original value", 0,step = 10)),
+                                        checkboxInput("upload_button", "UPLOAD OF IMPUTATION", value=F)
                        ),
                        conditionalPanel(condition="input.headtab == 1",
                                         downloadButton('download_outliers_value', 'Download')),
@@ -145,8 +158,12 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                    tabPanel("Imputation process", value = 8,                                           
                                               tabPanel("A",dataTableOutput("outliers_in_imputation_dt"),value = 'A' )    
                                    ),
-                                   tabPanel("Upload of imputations", value = 9,
-                                            dataTableOutput("upload_dt")
+                                   
+                                   tabPanel("Manual imputation", value = 9,
+                                            tabsetPanel(
+                                              tabPanel("Sample", dataTableOutput("imp_m_sample") ),
+                                              tabPanel("Universe", dataTableOutput("imp_m_universe"))
+                                            )
                                    ),
                                    tabPanel("Closing sessions", value = 10,
                                             tabsetPanel(

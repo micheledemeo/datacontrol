@@ -32,6 +32,14 @@ strato=strato_dt[,id_strato]
 strato=as.list(strato)
 names(strato)=strato_dt[,paste(descrizione,id_strato,sep="|@")]
 rm(strato_dt)
+
+id_battello_imp_m_dt=all[,.N,keyby=.(id_strato,descrizione,id_battello)][,descrizione:=paste(id_strato,"|",descrizione)][,id_strato:=NULL]
+id_battello_imp_m_dt=id_battello_imp_m_dt[,.N,keyby=.(descrizione,id_battello)]
+id_battello_imp_m=id_battello_imp_m_dt[,id_battello]
+id_battello_imp_m=as.list(id_battello_imp_m)
+names(id_battello_imp_m)=id_battello_imp_m_dt[,paste(descrizione,id_battello,sep="|@")]
+rm(id_battello_imp_m_dt)
+
 codsis=all[,unique(codsis199)]
 codsis=codsis[order(codsis)]
 codlft=all[,unique(codlft199)]
@@ -45,6 +53,7 @@ ril_strato=all[,.N,keyby=list(id_rilevatore,id_strato)][,N:=NULL]
 ril=as.list(ril_dt[,id_rilevatore])
 names(ril)=ril_dt[,paste(cognome,id_rilevatore,sep="  @")]
 rm(ril_dt)
+var_imp_m=var[var %in% c('carbur','alcova','spcom','alcofi','spmanu','lavoro','ricavi')]
 
 input_show_output=reactive({ input$show_output  })
 input_var=reactive({ input$var  })
@@ -80,3 +89,11 @@ input_group_for_imputation_method=reactive({ input$group_for_imputation_method  
 input_imputation_method=reactive({ input$imputation_method  })
 input_slider_hotdeck=reactive({input$slider_hotdeck})
 input_freeze_data=reactive({input$freeze_data})
+
+# oggetti in inputation manual
+input_var_imp_m=reactive({ input$var_imp_m })
+input_strato_imp_m=reactive({ input$strato_imp_m })
+input_slider_imp_m=reactive({input$slider_imp_m})
+input_imputation_manual_method=reactive({input$imputation_manual_method})
+input_abs_imp_m=reactive({if(is.na(input$abs_imp_m)) 0 else input$abs_imp_m })
+input_id_battello_imp_m=reactive({ input$id_battello_imp_m })
