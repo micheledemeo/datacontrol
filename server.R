@@ -406,7 +406,7 @@ output$notes_on_fixing=renderText({
     out
   
   })
-output$version_nr=renderText({ '0.2.100' }) # 
+output$version_nr=renderText({ '1.2.103' }) # 
 #output$uti=renderText({ input_id_battello_in_imp_m() })  
   
 }) #shinyServer

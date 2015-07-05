@@ -107,7 +107,7 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                        h5("Notes:"),
                        #verbatimTextOutput("perc_consegne_mensili"),
                        #verbatimTextOutput("perc_consegne_annuali"),
-                       conditionalPanel(condition="input.headtab == 8 | input.headtab == 9",
+                       conditionalPanel(condition="input.headtab == 8",
                                         verbatimTextOutput("notes_on_fixing")) #textOutput("notes_on_fixing"))
                        ,textOutput("uti")
                      ),
