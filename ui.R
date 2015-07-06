@@ -48,7 +48,7 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                        conditionalPanel(condition="input.headtab == 3", 
                                         checkboxInput(inputId = "apply_weights",label = "Apply weights", value=T)
                        ),
-                       conditionalPanel(condition="( (input.headtab >= 1 & input.headtab <= 4) | (input.headtab ==8 & input.start_imputation==0) | input.headtab == 9 ) & input.check_gio==0", 
+                       conditionalPanel(condition="( (input.headtab >= 1 & input.headtab <= 4) | (input.headtab ==8 & input.start_imputation==0) | input.headtab == 9 | input.close_download_view==101) & input.check_gio==0", 
                                         checkboxInput(inputId = "not_sent_as_0",label = "Not-sent as zero-values", value=F)
                        ),                     
                        conditionalPanel(condition="input.headtab== 8 & input.start_imputation==0",
@@ -95,6 +95,12 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                         conditionalPanel(condition="input.imputation_manual_method=='abs_change'", numericInput("abs_imp_m", "abs change of the original value", 0,step = 10)),
                                         checkboxInput("upload_button", "UPLOAD OF IMPUTATION", value=F)
                        ),
+                       conditionalPanel(condition="input.headtab == 10 & input.close_download_view==101",
+                                        radioButtons("exp_data", label = "Data download:",
+                                                     choices = list("original data" = 'orig', "with imputation" = 'imp'), selected = 'imp'),
+                                        downloadButton('download_universe_data', 'Download universe data'),
+                                        downloadButton('download_sample_data', 'Download sample data')
+                                        ),
                        conditionalPanel(condition="input.headtab == 1",
                                         downloadButton('download_outliers_value', 'Download')),
                        conditionalPanel(condition="input.headtab == 2",
@@ -166,8 +172,8 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                             )
                                    ),
                                    tabPanel("Closing sessions", value = 10,
-                                            tabsetPanel(
-                                              tabPanel("Close or open a strata"),
+                                            tabsetPanel(id="close_download_view",
+                                              tabPanel("Close or open a strata",value=101,dataTableOutput("table_universe_data")),
                                               tabPanel("Closed strata"),
                                               tabPanel("Imputations of prev sessions")
                                             )

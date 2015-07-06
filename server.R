@@ -171,6 +171,7 @@ shinyServer(function(input, output, session) {
     content = function(file) write.table( d_outliers_parameter(), file, sep=";",quote=F, na="",row.names = F)
   )
   
+  
   # definisci i waterfall data.table ####
   source( paste(getwd(), "source/waterfall.R", sep="/"),loc=T )
   
@@ -374,6 +375,17 @@ observe ({
 
 observe ({ if (input$headtab==4)  updateCheckboxInput(session, 'apply_weights', value = T)   })
 
+# export data in closing sessions ####
+source( paste(getwd(), "source/exp_data.R", sep="/"),loc=T )
+output$download_universe_data = downloadHandler(   
+  filename = "universe_data.csv",
+  content = function(file) write.table( universe_data(), file, sep=",",quote=F, na="",row.names = F)
+)
+output$download_sample_data = downloadHandler(   
+  filename = "sample_data.csv",
+  content = function(file) write.table( sample_data(), file, sep=",",quote=F, na="",row.names = F)
+)
+
 # objects to show in output ####
   output$table_outliers_value = renderDataTable({d_outliers_value()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,original_value=value_or,is_ok,final_value=ifelse(is_ok==1,value_ok,NA))]})
   output$table_outliers_parameter = renderDataTable({ d_outliers_parameter()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,parameter,original_value=value_or,is_ok,final_value=ifelse(is_ok==1,value_ok,NA))]})
@@ -406,7 +418,10 @@ output$notes_on_fixing=renderText({
     out
   
   })
-output$version_nr=renderText({ '1.2.103' }) # 
-#output$uti=renderText({ input_id_battello_in_imp_m() })  
+output$table_universe_data=renderDataTable({universe_data()})
+
+
+output$version_nr=renderText({ '2.1.104' }) # 
+#output$uti=renderText({ input_exp_data() })  
   
 }) #shinyServer

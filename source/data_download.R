@@ -89,6 +89,22 @@ input_group_for_imputation_method=reactive({ input$group_for_imputation_method  
 input_imputation_method=reactive({ input$imputation_method  })
 input_slider_hotdeck=reactive({input$slider_hotdeck})
 input_freeze_data=reactive({input$freeze_data})
+dep_imputation_tab=reactive({
+  input_var_imp()
+  input_codsis_imp()
+  input_codlft_imp()
+  input_strato_imp()
+  input_start_imputation()
+  input_remove_imputations_to_fit()
+  input_abs_or_mean_in_fix()
+  input_subset_units()
+  input_outliers_id_battello_list_to_subset()
+  input_keep_accept_refuse_outliers()
+  input_group_for_imputation_method()
+  input_imputation_method()
+  input_slider_hotdeck()
+  input_freeze_data()
+})
 
 # oggetti in inputation manual
 input_var_imp_m=reactive({ input$var_imp_m })
@@ -97,3 +113,15 @@ input_slider_imp_m=reactive({input$slider_imp_m})
 input_imputation_manual_method=reactive({input$imputation_manual_method})
 input_abs_imp_m=reactive({if(is.na(input$abs_imp_m)) 0 else input$abs_imp_m })
 input_id_battello_imp_m=reactive({ input$id_battello_imp_m })
+dep_imputation_manual_tab=reactive({
+  input_var_imp_m()
+  input_strato_imp_m()
+  input_slider_imp_m()
+  input_imputation_manual_method()
+  input_abs_imp_m()
+  input_id_battello_imp_m()
+  
+})
+  
+#oggetti in closing session
+input_exp_data=reactive({ input$exp_data })
