@@ -101,6 +101,11 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                         downloadButton('download_universe_data', 'Download universe data'),
                                         downloadButton('download_sample_data', 'Download sample data')
                                         ),
+                       conditionalPanel(condition="input.headtab == 10 & input.close_download_view==104",
+                                        uiOutput("keyby_sample_data"),
+                                        downloadButton('download_sample_rate', 'Download what you see'),
+                                        downloadButton('download_row_sample_rate', 'Download row data')
+                                        ),
                        conditionalPanel(condition="input.headtab == 1",
                                         downloadButton('download_outliers_value', 'Download')),
                        conditionalPanel(condition="input.headtab == 2",
@@ -175,7 +180,8 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                             tabsetPanel(id="close_download_view",
                                               tabPanel("Close or open a strata",value=101,dataTableOutput("table_universe_data")),
                                               tabPanel("Closed strata"),
-                                              tabPanel("Imputations of prev sessions")
+                                              tabPanel("Imputations of prev sessions"),
+                                              tabPanel("Sample rate",value=104,dataTableOutput("table_sample_rate"))
                                             )
                                    )
                        )

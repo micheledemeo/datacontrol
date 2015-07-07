@@ -89,6 +89,7 @@ options(warn=-1)
 d_mensili=melt(d_mensili,id.vars = 1, measure.vars = (2:ncol(d_mensili)), variable.factor = F)
 rm(vars)
 options(warn=0)
+sample_rate=copy(d_mensili)
 d_mensili=d_mensili[,list(value=sum2(value)), keyby=.(id_battello,variable)]
 d_mensili[is.na(value), value:=0]
 
@@ -121,6 +122,7 @@ options(warn=-1)
 d_annuali=melt(d_annuali,id.vars = 1, measure.vars = (2:ncol(d_annuali)), variable.factor = F)
 rm(vars)
 options(warn=0)
+sample_rate = rbindlist(list(sample_rate,d_annuali),fill = T)
 d_annuali=d_annuali[,list(value=sum2(value)), keyby=.(id_battello,variable)]
 d_annuali[is.na(value), value:=0]
 
@@ -161,9 +163,24 @@ rm(stima_retribuzione_lorda,parte_fisso)
 setkey(d, variable)
 setkey(aggrega_var, variable)
 d=aggrega_var[d]
-rm(aggrega_var)
 d[is.na(var),var:="unclassified"]
 d=d[,list(value=sum2(value)), keyby=.(id_battello,var)]
+
+# calcola sample rate ####
+setkey(sample_rate,variable)
+sample_rate=aggrega_var[sample_rate]
+sample_rate=sample_rate[,list(card_count=.N,null_count=sum(is.na(value))),by=list(id_battello,var)]
+sample_strata=all[,.N,keyby=list(id_battello,id_strato)][,N:=NULL]
+setkey(sample_strata, id_battello)
+sample_rate=sample_strata[sample_rate]
+sample_rate=sample_rate[!is.na(id_strato),list(card_count=sum(card_count),null_count=sum(null_count),sample_units=length(unique(id_battello))),keyby=list(id_strato,var)]
+fl=flotta[,list(universe_units=.N),keyby=id_strato]
+sample_rate=fl[sample_rate]
+st=all[,.N,keyby=list(id_strato,regione,codsis199,codlft199,gsa)][,N:=NULL]
+sample_rate=st[sample_rate]
+sample_rate=sample_rate[,list(id_strato,regione,codsis199,codlft199,gsa,var,null_count,card_count,sample_units,universe_units)]
+sample_rate[,sample_achieved_units:=round(sample_units *(1-null_count/card_count) )]
+rm(aggrega_var,sample_strata,fl,st)
 
 # join with d and control variables
 setkey(control_var_mensili, id_battello)

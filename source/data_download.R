@@ -125,3 +125,5 @@ dep_imputation_manual_tab=reactive({
   
 #oggetti in closing session
 input_exp_data=reactive({ input$exp_data })
+input_keyby_sample_rate=reactive({ input$keyby_sample_rate })
+

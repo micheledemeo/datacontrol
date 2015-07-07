@@ -386,6 +386,17 @@ output$download_sample_data = downloadHandler(
   content = function(file) write.table( sample_data(), file, sep=",",quote=F, na="",row.names = F)
 )
 
+# sample rate ####
+source( paste(getwd(), "source/sample_rate.R", sep="/"),loc=T )
+output$download_sample_rate = downloadHandler(   
+  filename = "sample_rate.csv",
+  content = function(file) write.table( sample_data_react(), file, sep=",",quote=F, na="",row.names = F)
+)
+output$download_row_sample_rate = downloadHandler(   
+  filename = "row_data_sample_rate.csv",
+  content = function(file) write.table( sample_rate, file, sep=",",quote=F, na="",row.names = F)
+)
+
 # objects to show in output ####
   output$table_outliers_value = renderDataTable({d_outliers_value()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,original_value=value_or,is_ok,final_value=ifelse(is_ok==1,value_ok,NA))]})
   output$table_outliers_parameter = renderDataTable({ d_outliers_parameter()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,parameter,original_value=value_or,is_ok,final_value=ifelse(is_ok==1,value_ok,NA))]})
@@ -419,9 +430,9 @@ output$notes_on_fixing=renderText({
   
   })
 output$table_universe_data=renderDataTable({universe_data()})
-
+output$table_sample_rate=renderDataTable({sample_data_react()})
 
 output$version_nr=renderText({ '2.1.104' }) # 
-#output$uti=renderText({ input_exp_data() })  
+#output$uti=renderText({ input_keyby_sample_rate()[1] })  
   
 }) #shinyServer
