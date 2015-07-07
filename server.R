@@ -432,7 +432,7 @@ output$notes_on_fixing=renderText({
 output$table_universe_data=renderDataTable({universe_data()})
 output$table_sample_rate=renderDataTable({sample_data_react()})
 
-output$version_nr=renderText({ '2.1.104' }) # 
+output$version_nr=renderText({ '2.1.106' }) # 
 #output$uti=renderText({ input_keyby_sample_rate()[1] })  
   
 }) #shinyServer
