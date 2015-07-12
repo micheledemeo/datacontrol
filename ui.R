@@ -117,13 +117,24 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                         ),
                        
                        conditionalPanel(condition="input.headtab == 1",
-                                        downloadButton('download_outliers_value', 'Download')),
+                                        downloadButton('download_outliers_value', 'Download csv'),
+                                        downloadButton('download_boxplot_value', 'Download graph')
+                                        ),
                        conditionalPanel(condition="input.headtab == 2",
-                                        downloadButton('download_outliers_parameter', 'Download')),
+                                        downloadButton('download_outliers_parameter', 'Download'),
+                                        downloadButton('download_boxplot_parameter', 'Download graph')),
+                       conditionalPanel(condition="input.headtab == 3",
+                                        downloadButton('download_pie_chart_value', 'Download csv'),
+                                        downloadButton('download_pie_chart', 'Download graph')
+                                        ),
+                       conditionalPanel(condition="input.headtab == 4",
+                                        downloadButton('download_waterfall', 'Download the graph you see')
+                                        ),
                        conditionalPanel(condition="input.headtab == 6 && input.zero_or_not_sent == 61",
                                         downloadButton('download_zero_checks', 'Download')),
                        conditionalPanel(condition="input.headtab == 6 && input.zero_or_not_sent == 62",
-                                        downloadButton('download_not_sent', 'Download')),
+                                        downloadButton('download_not_sent', 'Download')
+                                        ),
                        br(),br(),
                        h5("Notes:"),
                        #verbatimTextOutput("perc_consegne_mensili"),
@@ -149,14 +160,14 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                    tabPanel("Pie chart - % costs",value = 3,plotOutput("pie"),dataTableOutput("pie_data") ),
                                    
                                    tabPanel("Waterfall: costs and profit", value = 4,
-                                            tabsetPanel(
-                                              tabPanel("All", plotOutput("waterfall_plot_italy")),
-                                              tabPanel("Grouped by strata", plotOutput("waterfall_plot_strata", height = 1000)),
-                                              tabPanel("Grouped by gear", plotOutput("waterfall_plot_gear",height = 800)),
-                                              tabPanel("Grouped by LOA", plotOutput("waterfall_plot_loa",height = 800)),
-                                              tabPanel("Grouped by regione", plotOutput("waterfall_plot_regione",height = 800)),
-                                              tabPanel("Grouped by gsa", plotOutput("waterfall_plot_gsa",height = 800)),
-                                              tabPanel("Grouped by gear * LOA", plotOutput("waterfall_plot_gear_loa",height = 1000))  
+                                            tabsetPanel(id = "waterfall_tab",
+                                              tabPanel("All", plotOutput("waterfall_plot_italy"),value = 41),
+                                              tabPanel("Grouped by strata", plotOutput("waterfall_plot_strata", height = 1000),value = 42),
+                                              tabPanel("Grouped by gear", plotOutput("waterfall_plot_gear",height = 800),value = 43),
+                                              tabPanel("Grouped by LOA", plotOutput("waterfall_plot_loa",height = 800),value = 44),
+                                              tabPanel("Grouped by regione", plotOutput("waterfall_plot_regione",height = 800),value = 45),
+                                              tabPanel("Grouped by gsa", plotOutput("waterfall_plot_gsa",height = 800),value = 46),
+                                              tabPanel("Grouped by gear * LOA", plotOutput("waterfall_plot_gear_loa",height = 1000),value = 47)  
                                             )
                                    ),
                                    

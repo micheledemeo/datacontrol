@@ -114,7 +114,9 @@ shinyServer(function(input, output, session) {
     if (input$headtab <=2 | input$headtab>=6) d_panel[ var %in% input_var() ] else d_panel
   })
 
-
+  # downloadHandler in the project ####
+  source( paste(getwd(), "source/download_shiny_objects.R", sep="/"),loc=T )
+  
   ok_rows=reactive({nrow(d_panel())>0})
   
   facet_vars=reactive({ 
@@ -141,6 +143,8 @@ shinyServer(function(input, output, session) {
     d_pie 
   })
   
+  source( paste(getwd(), "source/download_shiny_objects.R", sep="/"),loc=T )
+  
   d_outliers_value=reactive({
     
     d_outliers=d_panel()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,value,is_ok,value_ok,value_or)]
@@ -151,11 +155,6 @@ shinyServer(function(input, output, session) {
     
   })
   
-#  source( paste(getwd(), "source/download_shiny_objects.R", sep="/"),loc=T )
-#   output$download_outliers_value = downloadHandler(   
-#     filename = "outliers_abs.csv",
-#     content = function(file) write.table( d_outliers_value(), file, sep=";",quote=F, na="",row.names = F)
-#   )
   
   d_outliers_parameter=reactive({
 
@@ -166,11 +165,6 @@ shinyServer(function(input, output, session) {
     d_outliers2[d_outliers][parameter>out_up | parameter<out_down][,c('out_up','out_down'):=NULL]
     
   })
-  
-  output$download_outliers_parameter = downloadHandler(   
-    filename = "outliers_mean.csv",
-    content = function(file) write.table( d_outliers_parameter(), file, sep=";",quote=F, na="",row.names = F)
-  )
   
   
   # definisci i waterfall data.table ####
@@ -184,21 +178,28 @@ shinyServer(function(input, output, session) {
         d_pie_filter=d_pie_filter[1:10]
         setkeyv(d_pie_filter, setdiff(facet_vars(),"var"))
       }
-      d_pie()[d_pie_filter,ggplot(.SD, aes(x="",y=value,fill=var)) + geom_bar(stat="identity") + coord_polar(theta="y") + facet_wrap(~eval(parse(text= paste0(facet_vars(), collapse=" + " ) )),ncol=5) + geom_text(aes(label = paste0(round(100*value,0), "%"), y=pie_label_position) )]
+      current_plot=d_pie()[d_pie_filter,ggplot(.SD, aes(x="",y=value,fill=var)) + geom_bar(stat="identity") + coord_polar(theta="y") + facet_wrap(~eval(parse(text= paste0(facet_vars(), collapse=" + " ) )),ncol=5) + geom_text(aes(label = paste0(round(100*value,0), "%"), y=pie_label_position) )]
+      ggsave("boxplot_outliers_abs.png",current_plot)
+      current_plot
     }
   })
-  
+ 
   output$boxplot_value = renderPlot({
-    d_panel()[ ,ggplot(.SD, aes(x= var,y=value)) +geom_boxplot(outlier.size=3 ,outlier.colour="red", fill="grey",colour = "blue") + xlab("") ]
+    current_plot=d_panel()[ ,ggplot(.SD, aes(x= var,y=value)) +geom_boxplot(outlier.size=3 ,outlier.colour="red", fill="grey",colour = "blue") + xlab("")]
+    ggsave("boxplot_outliers_abs.png",current_plot)
+    current_plot
   })
   
   output$boxplot_parameter = renderPlot({
-    d_panel()[ ,ggplot(.SD, aes(x= var,y=parameter)) +geom_boxplot(outlier.size=3 ,outlier.colour="red", fill="grey",colour = "blue") + xlab("") ]
+    current_plot=d_panel()[ ,ggplot(.SD, aes(x= var,y=parameter)) +geom_boxplot(outlier.size=3 ,outlier.colour="red", fill="grey",colour = "blue") + xlab("") ]
+    ggsave("boxplot_outliers_parameter.png",current_plot)
+    current_plot
   })
   
   output$waterfall_plot_italy = renderPlot({
-    d_waterfall_italy()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) + theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy)) ]
-   
+    current_plot=d_waterfall_italy()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) + theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy)) ]
+    ggsave("waterfall_italy.png",current_plot)
+    current_plot
   })
   
   output$waterfall_plot_strata = renderPlot({
@@ -206,6 +207,7 @@ shinyServer(function(input, output, session) {
     if(ok_rows()) {
       str_in_panel=d_waterfall_strata()[,unique(id_strato)]
       
+      current_plot=
       if (length(str_in_panel)<14 )  {
         
           d_waterfall_strata()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~id_strato, ncol=2,scales = "free") +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy, size=4))  ]
@@ -214,7 +216,9 @@ shinyServer(function(input, output, session) {
         
         d_waterfall_strata()[ id_strato %in% str_in_panel[1:14] ,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~id_strato, ncol=2,scales = "free") +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy),size=4)  ]
         
-      }  
+      }
+      ggsave("waterfall_strata.png",current_plot)
+      current_plot
       
     }
     
@@ -226,6 +230,7 @@ shinyServer(function(input, output, session) {
       
       sis_lft_in_panel=d_waterfall_gear_loa()[,.N,list(codsis199,codlft199)]
       
+      current_plot=
       if ( nrow(sis_lft_in_panel)<14 )  {
         d_waterfall_gear_loa()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~ codsis199+codlft199, scales = "free",ncol = 2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy), size=4) ]
         
@@ -236,22 +241,32 @@ shinyServer(function(input, output, session) {
         d_waterfall_gear_loa()[ paste0(codsis199,codlft199) %in% u_sis_flt,
                                 ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~ codsis199+codlft199, scales = "free",ncol = 2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy), size=4) ]
         
-      }     
+      }
+      
+      ggsave("waterfall_plot_gear_loa.png",current_plot)
+      current_plot
       
     }
     
   })
   
   output$waterfall_plot_gear = renderPlot({
+    current_plot=
     d_waterfall_gear()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~codsis199,scales = "free",ncol = 2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy)) ]
+    ggsave("waterfall_plot_gear.png",current_plot)
+    current_plot
   })
   output$waterfall_plot_loa = renderPlot({
+    current_plot=
     d_waterfall_loa()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~codlft199,scales = "free", ncol=2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy))]
+    ggsave("waterfall_plot_loa.png",current_plot)
+    current_plot
   })
   output$waterfall_plot_regione = renderPlot({
     
     if(ok_rows()) {      
       regione_in_panel=d_waterfall_regione()[,unique(regione)]
+      current_plot=
       if(length(regione_in_panel)>10) {
         
         d_waterfall_regione()[regione %in% regione_in_panel[1:10],
@@ -262,12 +277,15 @@ shinyServer(function(input, output, session) {
         d_waterfall_regione()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~regione,scales = "free", ncol=2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy))]
         
       }
+      ggsave("waterfall_plot_regione.png",current_plot)
+      current_plot
     }    
   })
   output$waterfall_plot_gsa = renderPlot({
     
     if(ok_rows()) {      
       gsa_in_panel=d_waterfall_gsa()[,unique(gsa)]
+      current_plot=
       if(length(gsa_in_panel)>10) {
         
         d_waterfall_gsa()[gsa %in% gsa_in_panel[1:10],
@@ -278,6 +296,8 @@ shinyServer(function(input, output, session) {
         d_waterfall_gsa()[,ggplot(.SD, aes(var, fill=var)) +  geom_rect(aes(x = var, ymin = end, ymax = start, xmin=o-.45, xmax=o+.45)) + scale_x_discrete(limits=c('carbur','alcova','spcom','spmanu','alcofi','lavoro','proflor','ricavi')) +geom_text(aes(o, end, label=format(round(value/1000),big.mark = "."))) +facet_wrap(~gsa,scales = "free", ncol=2) +  theme(axis.ticks = element_blank(), axis.text.y = element_blank())  + ylab("") + xlab("") + guides(fill=guide_legend(title="1.000 € \n" )) + geom_text(aes(o, 0,label=yoy))]
         
       }
+      ggsave("waterfall_plot_gsa.png",current_plot)
+      current_plot
     }    
   })
   
@@ -286,14 +306,7 @@ shinyServer(function(input, output, session) {
   not_sent=reactive({ all[sent==0 , .N ,list(id_battello,numero_ue,id_rilevatore,id_strato,regione,codsis199,codlft199,gsa,descrizione) ][,N:=NULL] })  
   output$zero_checks_dt = renderDataTable({ zero_checks() })
   output$not_sent_dt = renderDataTable({ not_sent() })
-  output$download_zero_checks = downloadHandler(   
-      filename = "zero_checks.csv",
-      content = function(file) write.table( zero_checks(), file, sep=";",quote=F, na="",row.names = F)
-  )
-  output$download_not_sent = downloadHandler(    
-    filename = "not_sent.csv",
-    content = function(file) write.table( not_sent(), file, sep=";",quote=F, na="",row.names = F)
-  )
+  
 # imputation process #####
 source( paste(getwd(), "source/imputation.R", sep="/"),loc=T )
   
@@ -386,25 +399,9 @@ observe ({ if (input$headtab==4)  updateCheckboxInput(session, 'apply_weights', 
 
 # export data in closing sessions ####
 source( paste(getwd(), "source/closing_sessions.R", sep="/"),loc=T )
-output$download_universe_data = downloadHandler(   
-  filename = "universe_data.csv",
-  content = function(file) write.table( universe_data(), file, sep=",",quote=F, na="",row.names = F)
-)
-output$download_sample_data = downloadHandler(   
-  filename = "sample_data.csv",
-  content = function(file) write.table( sample_data(), file, sep=",",quote=F, na="",row.names = F)
-)
 
 # sample rate ####
 source( paste(getwd(), "source/sample_rate.R", sep="/"),loc=T )
-output$download_sample_rate = downloadHandler(   
-  filename = "sample_rate.csv",
-  content = function(file) write.table( sample_data_react(), file, sep=",",quote=F, na="",row.names = F)
-)
-output$download_row_sample_rate = downloadHandler(   
-  filename = "row_data_sample_rate.csv",
-  content = function(file) write.table( sample_rate, file, sep=",",quote=F, na="",row.names = F)
-)
 
 # objects to show in output ####
   output$table_outliers_value = renderDataTable({d_outliers_value()[,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,giorni_mare,original_value=value_or,is_ok,final_value=ifelse(is_ok==1,value_ok,NA))]})
