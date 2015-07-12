@@ -439,7 +439,7 @@ output$table_universe_data=renderDataTable({universe_data()})
 output$table_close_strata=renderDataTable({universe_data()[id_strato %in% c(input_strato_close(),input_strato_open())] })
 output$table_sample_rate=renderDataTable({sample_data_react()})
 
-output$version_nr=renderText({ '2.2.109' }) # 
+output$version_nr=renderText({ '2.2.116' }) # 
 #output$uti=renderText({ input_strato_open()[1] })  
   
 }) #shinyServer
