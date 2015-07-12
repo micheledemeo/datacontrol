@@ -95,17 +95,27 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                         conditionalPanel(condition="input.imputation_manual_method=='abs_change'", numericInput("abs_imp_m", "abs change of the original value", 0,step = 10)),
                                         checkboxInput("upload_button", "UPLOAD OF IMPUTATION", value=F)
                        ),
-                       conditionalPanel(condition="input.headtab == 10 & input.close_download_view==101",
-                                        radioButtons("exp_data", label = "Data download:",
-                                                     choices = list("original data" = 'orig', "with imputation" = 'imp'), selected = 'imp'),
-                                        downloadButton('download_universe_data', 'Download universe data'),
-                                        downloadButton('download_sample_data', 'Download sample data')
+                       conditionalPanel(condition="input.headtab == 10",
+                                        conditionalPanel(condition="input.close_download_view!=104",
+                                                         radioButtons("exp_data", label = "Data download:",
+                                                                      choices = list("original data" = 'orig', "with imputation" = 'imp'), selected = 'imp')
+                                                         ),
+                                        conditionalPanel(condition="input.close_download_view==101",
+                                                         downloadButton('download_universe_data', 'Download universe data'),
+                                                         downloadButton('download_sample_data', 'Download sample data')
+                                                         ),
+                                        conditionalPanel(condition="input.close_download_view==104",
+                                                         uiOutput("keyby_sample_data"),
+                                                         downloadButton('download_sample_rate', 'Download what you see'),
+                                                         downloadButton('download_row_sample_rate', 'Download row data')
+                                                         ),
+                                        conditionalPanel(condition="input.close_download_view==102",
+                                                         uiOutput("strato_close"),
+                                                         uiOutput("strato_open"),
+                                                         checkboxInput("close_open_strata", "CLOSE / OPEN / RESET STRATA", value=F)
+                                                         )
                                         ),
-                       conditionalPanel(condition="input.headtab == 10 & input.close_download_view==104",
-                                        uiOutput("keyby_sample_data"),
-                                        downloadButton('download_sample_rate', 'Download what you see'),
-                                        downloadButton('download_row_sample_rate', 'Download row data')
-                                        ),
+                       
                        conditionalPanel(condition="input.headtab == 1",
                                         downloadButton('download_outliers_value', 'Download')),
                        conditionalPanel(condition="input.headtab == 2",
@@ -178,9 +188,8 @@ shinyUI(fluidPage( theme = shinytheme("flatly"),
                                    ),
                                    tabPanel("Closing sessions", value = 10,
                                             tabsetPanel(id="close_download_view",
-                                              tabPanel("Close or open a strata",value=101,dataTableOutput("table_universe_data")),
-                                              tabPanel("Closed strata"),
-                                              tabPanel("Imputations of prev sessions"),
+                                              tabPanel("Data download",value=101,dataTableOutput("table_universe_data")),
+                                              tabPanel("Close or open a strata",value = 102,dataTableOutput("table_close_strata") ),
                                               tabPanel("Sample rate",value=104,dataTableOutput("table_sample_rate"))
                                             )
                                    )

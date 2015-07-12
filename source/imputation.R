@@ -201,7 +201,7 @@ imputation_output=reactive({
       hotdeck
     }  
   } else {
-    data.table(id_battello=0,var=0,imputation_value=0,imputation_parameter=0)[0]
+    data.table(id_battello=0L,var="",imputation_value=0L,imputation_parameter=0L,imputation_notes="")[0]
   }
   
 })
@@ -211,8 +211,8 @@ imputation_output=reactive({
 output$outliers_in_imputation_dt=renderDataTable({
   
   input_remove_imputations_to_fit()
-#    write.table.ok(imputation_output(),"imputation_output.csv")
-#   write.table.ok(data_for_imputation(),"data_for_imputation.csv")
+#     write.table.ok(imputation_output(),"imputation_output.csv")
+#     write.table.ok(data_for_imputation(),"data_for_imputation.csv")
   
   if (input_start_imputation()==0 ) {
     setkey(all, id_battello,var)
@@ -249,8 +249,8 @@ output$outliers_in_imputation_dt=renderDataTable({
     } else { # qui input_keep_accept_refuse_outliers()=="refuse" (start imputation)
       
       nts=paste(session_info, input_abs_or_mean_in_fix(), input_subset_units(), input_keep_accept_refuse_outliers(), input_remove_imputations_to_fit() ,input_group_for_imputation_method(),input_imputation_method(), sep="|")
+     
       setkey(all, id_battello,var )
-      #write.table.ok(all[imputation_output(), list(value_ok,parameter_ok,is_ok,notes,imputation_notes)], "all_imputations_output.csv" )
       all[imputation_output(), (c('value_ok','parameter_ok','is_ok','notes')):=list(ifelse(imputation_notes=='ok',imputation_value, ifelse(is.na(hist_value),value_or,hist_value) ),
                                                                                     ifelse(imputation_notes=='ok',imputation_parameter, ifelse(is.na(hist_parameter),parameter_or,hist_parameter)),
                                                                                     ifelse(imputation_notes=='ok',1L,  ifelse(is.na(hist_is_ok),0,hist_is_ok) ),

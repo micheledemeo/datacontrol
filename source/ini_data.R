@@ -230,6 +230,9 @@ setkey(ril_cognome, id_rilevatore)
 ril_dt=ril_cognome[ril_dt][,N:=NULL]
 rm(ril_cognome)
 
+# crea strato battello ####
+strato_battello=all[,.N,keyby=list(id_battello,id_strato)][,N:=NULL]
+
 # gestisci valori iniziali di value e parameter, in accordo con la hist ####
 # value_or è il valore originiale scaricato da server
 # value_ok è il valore finale su cui si fa l'espansione. esso comprende le imputazioni dell'utente
@@ -249,14 +252,17 @@ if( file.exists(paste0(temp_dir_nicoda,"\\nicoda.csv")) && length(readLines(past
 }
 
 if(nrow(hist)>0){
-  hist=hist[,list(id_battello,var,hist_value,hist_parameter,hist_notes,closing_session)]
-  hist[,c('id_battello','var','hist_value','hist_parameter','hist_notes','closing_session'):=list(as.integer(id_battello),as.character(var),as.numeric(hist_value),as.numeric(hist_parameter),as.character(hist_notes),as.character(closing_session))]
-  setkey(hist, id_battello,var)
+  hist=hist[hist_notes!="control record"]
+  hist_join=hist[,list(id_battello,var,hist_value,hist_parameter,hist_notes,closing_session)]
+  hist_join[,c('id_battello','var','hist_value','hist_parameter','hist_notes','closing_session'):=list(as.integer(id_battello),as.character(var),as.integer(round(hist_value,0)),as.numeric(hist_parameter),as.character(hist_notes),as.character(closing_session))]
+  setkey(hist_join, id_battello,var)
   setkey(all, id_battello,var)
-  hist[,hist_parameter:=as.numeric(hist_parameter)]
-  all=hist[all]
+  hist_join[,hist_parameter:=as.numeric(hist_parameter)]
+  all=hist_join[all]
   all[!is.na(hist_value), (c('value_ok','parameter_ok','notes','is_ok','hist_is_ok')):=list(hist_value,hist_parameter,hist_notes,1L,1L)]
+  rm(hist_join)
 } else {
   all[,c('hist_value','hist_parameter','hist_notes','hist_is_ok'):=list(NA)]
+  hist=data.table(id_battello=0L,var="",hist_value=0L,hist_parameter=0.,hist_notes="",closing_session="")[0]
 }
 

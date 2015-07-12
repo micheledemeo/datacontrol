@@ -126,4 +126,9 @@ dep_imputation_manual_tab=reactive({
 #oggetti in closing session
 input_exp_data=reactive({ input$exp_data })
 input_keyby_sample_rate=reactive({ input$keyby_sample_rate })
+input_strato_close=reactive({ input$strato_close })
+input_strato_open=reactive({ input$strato_open})
+
+
+
 

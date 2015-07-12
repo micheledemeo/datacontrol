@@ -30,6 +30,7 @@ shinyServer(function(input, output, session) {
   output$strato_imp_m=renderUI({ selectInput("strato_imp_m", label = "Strata:", choices =strato, selected = NULL, multiple = T ) })
   output$id_battello_imp_m=renderUI({ selectInput("id_battello_imp_m", label = "id_battello:", choices =id_battello_imp_m, selected = NULL, multiple = T ) })
   
+  
   observe({ if (!is.null(input_codsis_imp()) | !is.null(input_codlft_imp())  ) updateSelectInput(session, "strato_imp", choices =strato, selected = NULL) })
   observe({ 
     if (!is.null(input_strato_imp()) ) {
@@ -311,8 +312,8 @@ observe({
   } 
 })
 
-# update of manual imputation tab if imputation is selected  ####
-observe({ if (input$headtab==8) { 
+# update of manual imputation tab if imputation or closing_session is selected  ####
+observe({ if (input$headtab %in% c(8,10)) { 
   updateSelectInput(session, 'slider_imp_m',selected = 0 ) 
   updateSelectInput(session, 'abs_imp_m',selected = 0 )
   updateSelectInput(session, 'strato_imp_m',selected = NA )
@@ -320,7 +321,7 @@ observe({ if (input$headtab==8) {
   } 
   })
 # update of imputation tab if manual imputation is selected ####
-observe({  if (input$headtab==9) updateCheckboxInput( session, "start_imputation", value = 0) })
+observe({  if (input$headtab %in% c(9,10) ) updateCheckboxInput( session, "start_imputation", value = 0) })
 
 
 # imputation upload with button and nicoda restart ####
@@ -329,7 +330,9 @@ observe({
     withProgress(message = "Uploadig data to remote server:",{
       n=20
       
-      up=all[is_ok==1,.(id_rilevatore,var,id_strato,id_battello,regione,codsis199,codlft199,gsa,descrizione,value_ok,value_or,parameter_ok,notes)]
+      up=all[is_ok==1 & grepl(session_info,notes,fixed = T),  .(var,id_strato,id_battello,value_ok,parameter_ok,notes)]
+      hist2=hist[! (id_battello %in% up[,unique(id_battello)] & var %in% up[,unique(var)]) ][,id:=NULL]
+      
       setkey(up,id_battello)
       up=pr_i[up]
       up[is.na(pr_i), pr_i:=0] # qui non metto inf perché poi salvo nel db
@@ -348,6 +351,9 @@ observe({
       } # if( input_not_sent_as_0()==1 )
       
       up=up[,list(id_battello,var,day=Sys.Date(),year=strftime(Sys.Date(),"%Y"),pr_i=round(pr_i,8),hist_value=value_ok,hist_parameter=parameter_ok,hist_notes=notes,closing_session="open")]
+      
+      if(nrow(hist2)>0) up=rbindlist(list( up,hist2 ))
+      
       write.table(up, paste0(temp_dir_nicoda,"\\nicoda.csv"), sep=";", quote = FALSE, na = "", row.names = F,col.names = F)
       ftp(action="put")
       if (input$headtab==8)  updateTabsetPanel(session, "headtab" ,selected = 9) else updateTabsetPanel(session, "headtab" ,selected = 8)
@@ -358,8 +364,10 @@ observe({
         Sys.sleep(.1)
        }
     }) # withProgress     
+     
      system(paste("taskkill /pid",pid))
      browseURL("http://127.0.0.1:12345/")
+     #system(paste("taskkill /pid",pid,"start http://127.0.0.1:12345/"))
   }
   
 })
@@ -376,7 +384,7 @@ observe ({
 observe ({ if (input$headtab==4)  updateCheckboxInput(session, 'apply_weights', value = T)   })
 
 # export data in closing sessions ####
-source( paste(getwd(), "source/exp_data.R", sep="/"),loc=T )
+source( paste(getwd(), "source/closing_sessions.R", sep="/"),loc=T )
 output$download_universe_data = downloadHandler(   
   filename = "universe_data.csv",
   content = function(file) write.table( universe_data(), file, sep=",",quote=F, na="",row.names = F)
@@ -430,9 +438,10 @@ output$notes_on_fixing=renderText({
   
   })
 output$table_universe_data=renderDataTable({universe_data()})
+output$table_close_strata=renderDataTable({universe_data()[id_strato %in% c(input_strato_close(),input_strato_open())] })
 output$table_sample_rate=renderDataTable({sample_data_react()})
 
 output$version_nr=renderText({ '2.1.106' }) # 
-#output$uti=renderText({ input_keyby_sample_rate()[1] })  
+#output$uti=renderText({ input_strato_open()[1] })  
   
 }) #shinyServer
