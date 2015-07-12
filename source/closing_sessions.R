@@ -124,10 +124,10 @@ observe({
         Sys.sleep(.1)
       }
     }) # withProgress     
-    #system(paste("taskkill /pid",pid))
-    browseURL("http://127.0.0.1:12345/")
-    #system(paste("taskkill /pid",pid,"& start http://127.0.0.1:12345/"))
     
+    system(paste("taskkill /pid",pid),wait = T)
+    Sys.sleep(2)
+    browseURL("http://127.0.0.1:12345/")
     
   }
   
