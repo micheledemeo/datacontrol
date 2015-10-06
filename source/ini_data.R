@@ -135,9 +135,10 @@ rm(d_mensili,d_annuali)
 source( paste(wd, "source/ricavi_fak.R", sep="/"),loc=T )
 ################################################################################################
 
-# monte e stima retribuzione_lorda (a cui poi si aggiungono oneri sociali, irpef, inail per ottenere lavoro, mediante join con aggrega_var)
+# monte e stima retribuzione_lorda 
+# (a cui poi si aggiungono oneri sociali, irpef, inail per ottenere lavoro, mediante join con aggrega_var)
 setkey(d, variable)
-var_per_monte=c('costo_carburante','costo_lubrificante','diritti_mercato_ittico','provvigioni_grossista','provvigioni_astatore','facchinaggio_prodotti_ittici','spese_per_automezzi','spese_per_ghiaccio','cassette_e_imballaggio','altri_costi','riparazione_reti', 'spese_panatica_di_bordo','acquisto_esche','spese_telefonia_di_bordo','spese_tv_di_bordo','valore_totale')
+var_per_monte=c('oneri_sociali','irpef','inail_malattie','inail_infortuni','costo_carburante','costo_lubrificante','diritti_mercato_ittico','provvigioni_grossista','provvigioni_astatore','facchinaggio_prodotti_ittici','spese_per_automezzi','spese_per_ghiaccio','cassette_e_imballaggio','altri_costi','riparazione_reti', 'spese_panatica_di_bordo','acquisto_esche','spese_telefonia_di_bordo','spese_tv_di_bordo','valore_totale')
 stima_retribuzione_lorda=d[.(var_per_monte)][variable!='valore_totale',value:=-value][,list(monte=sum(value)),keyby=id_battello]
 stima_retribuzione_lorda[monte<0, monte:=0]
 temp=all[var=="lavoro",list(id_battello,id_strato)]
@@ -146,7 +147,7 @@ setkey(parte_fisso, id_battello)
 parte_fisso=parte_fisso[temp]
 rm(temp)
 parte_fisso[,percentuale_alla_parte:=mean(percentuale_alla_parte,na.rm = T), keyby=id_strato]
-parte_fisso[is.na(percentuale_alla_parte),percentuale_alla_parte:=50]
+parte_fisso[is.na(percentuale_alla_parte),percentuale_alla_parte:=45]
 parte_fisso=parte_fisso[,list(id_battello,percentuale_alla_parte=round(percentuale_alla_parte/100,2))]
 setkey(parte_fisso, id_battello)
 stima_retribuzione_lorda=parte_fisso[stima_retribuzione_lorda]

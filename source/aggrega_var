@@ -1,9 +1,5 @@
 id;variable;var
 1;retribuzioni_lorde;lavoro
-2;oneri_sociali;lavoro
-3;irpef;lavoro
-4;inail_malattie;lavoro
-5;inail_infortuni;lavoro
 6;costo_carburante;carbur
 7;costo_lubrificante;carbur
 8;diritti_mercato_ittico;spcom
