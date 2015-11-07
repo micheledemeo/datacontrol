@@ -179,7 +179,7 @@ shinyServer(function(input, output, session) {
         setkeyv(d_pie_filter, setdiff(facet_vars(),"var"))
       }
       current_plot=d_pie()[d_pie_filter,ggplot(.SD, aes(x="",y=value,fill=var)) + geom_bar(stat="identity") + coord_polar(theta="y") + facet_wrap(~eval(parse(text= paste0(facet_vars(), collapse=" + " ) )),ncol=5) + geom_text(aes(label = paste0(round(100*value,0), "%"), y=pie_label_position) )]
-      ggsave("boxplot_outliers_abs.png",current_plot)
+      #ggsave("boxplot_outliers_abs.png",current_plot)
       current_plot
     }
   })
