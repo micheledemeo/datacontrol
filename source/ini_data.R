@@ -1,14 +1,17 @@
 wd=getwd()
 
+# load year
+year_local=fread(pastedir(wd,"source/year"))$V1
+
 # elenco bat_riltelli per controllo consegne ####
 bat_ril=fread_mysql(tbname = 'battelli_rilevatori')
-bat_ril=bat_ril[ anno==2014, list(id_battello ,id_rilevatore)]
+bat_ril=bat_ril[ anno==year_local, list(id_battello ,id_rilevatore)]
 setkey(bat_ril, id_battello)
 
 # importa tab di aggregazioni voci di costo, genera flotta per pesi, genera all data.table ####
 aggrega_var=fread(pastedir(wd,"source/aggrega_var"),select = c('variable','var'))
 all=fread_mysql(tbname = 'battelli')
-all=all[grepl("2014",data_riferimento), .(id_battello=id,id_strato,numero_ue,lft)]
+all=all[grepl(year_local,data_riferimento), .(id_battello=id,id_strato,numero_ue,lft)]
 setkey(all,id_battello)
 all=all[bat_ril,nomatch=0][,i:=0]
 bat_ril=bat_ril[ all[,list(id_battello,id_strato)] ]
@@ -48,7 +51,7 @@ rm(cj)
 
 # importa labels per strati ####
 s=fread_mysql(tbname = 'strati')
-s=s[anno==2014][,c('anno','id'):=NULL]
+s=s[anno==year_local][,c('anno','id'):=NULL]
 setkey(all, id_strato)
 setkey(s, id_strato)
 all=s[all]
@@ -64,7 +67,7 @@ rm(s)
 
 # importa dati mensili ####
 d_mensili=fread_mysql(tbname = 'schede_mensili')
-d_mensili=d_mensili[anno==2014]
+d_mensili=d_mensili[anno==year_local]
 # crea control_var_mensili table con variabili che non vanno usate in melt, ma aggregate a parte e messe in join
 control_var_mensili=d_mensili[,list(giorni_mare=sum2(giorni_mare),equipaggio_medio=ifelse(sum2(giorni_mare)==0,mean(equipaggio_medio),sum2(equipaggio_medio*giorni_mare)/sum2(giorni_mare)) ,volume_carburante=sum2(volume_carburante+volume_lubrificante) ),keyby=.(id_battello)]
 vars=fread(pastedir(wd,"source/vars_schede_mensili"),header = F)
@@ -95,7 +98,7 @@ d_mensili[is.na(value), value:=0]
 
 # importa dati annuali ####
 d_annuali=fread_mysql(tbname = 'schede_annuali')
-d_annuali=d_annuali[anno==2014]
+d_annuali=d_annuali[anno==year_local]
 # crea control_var_mensili table con variabili che non vanno usate in melt, ma aggregate a parte e messe in join
 control_var_annuali=d_annuali[,list(Valore_di_mercato_del_battello=mean(Valore_di_mercato_del_battello),Numero_di_proprietari_del_battello=mean(Numero_di_proprietari_del_battello)),keyby=.(id_battello)]
 vars=fread(pastedir(wd,"source/vars_schede_annuali"),header = F)
