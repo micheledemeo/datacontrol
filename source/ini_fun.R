@@ -3,6 +3,8 @@ temp_dir_nicoda=paste0(Sys.getenv("LOCALAPPDATA"),"\\Nicoda")
 unlink(temp_dir_nicoda, recursive = T, force = T)
 dir.create(temp_dir_nicoda)
 
+wd=getwd()
+
 # inizialization for wd and libraries
 session_info=paste(Sys.info()['nodename'], Sys.info()['user'], strftime(Sys.time(),"%Y-%m-%d-%X"), sep="|")
 require(shiny)
@@ -13,7 +15,7 @@ require(ggplot2)
 sum2=function(...,na.rm=T) sum(...,na.rm=na.rm)
 
 # startup functions ####
-fread_mysql = function( tbname, dbname="nisea" , user="nisea", psw="n1s34", csvname=strftime(Sys.time(),"%Y%m%d%H%M%S"), temp_dir=temp_dir_nicoda ,mysqldir="C:/wamp/bin/mysql/mysql5.6.17/bin",integer64=getOption("datatable.integer64")  ) {
+fread_mysql = function( tbname , dbname="nisea" , user="nisea", psw="n1s34", csvname=strftime(Sys.time(),"%Y%m%d%H%M%S"), temp_dir=temp_dir_nicoda ,mysqldir="C:/wamp/bin/mysql/mysql5.6.17/bin",integer64=getOption("datatable.integer64")  ) {
   
   require(data.table)
   temp_dir=gsub("\\","/",temp_dir,fixed = T)
@@ -32,7 +34,7 @@ fread_mysql = function( tbname, dbname="nisea" , user="nisea", psw="n1s34", csvn
   shell(strbatch,intern = T)
  
   if (length( readLines(csvdir,n = 1) )>0) {
-    d=fread(csvdir,header = F, integer64=integer64)
+    d=fread(csvdir,header = F, integer64=integer64,sep="\t")
     setnames(d, names(d), dnames$V1 )
     
   } else {
@@ -48,9 +50,11 @@ write.table.ok =  function(...) write.table(... , sep=";", row.names=FALSE,na=""
 
 source("C:/Program Files/R/R-3.1.1/_nisea/hvServer.R")
 
-ftp=function(action="get",filename="nicoda.csv",host="ftp.rilevazionecosti.org", user="niseabackup",psw="n1s34",temp_dir=temp_dir_nicoda) {
+ftp=function(action="get",filename="nicodaYYYY.csv",year_local="",host="ftp.rilevazionecosti.org", user="niseabackup",psw="n1s3454t",temp_dir=temp_dir_nicoda) {
   
   if(action!="get") action="put"
+  
+  if (year_local!="") filename = gsub("YYYY",year_local,filename)
   
   # crea .bat
   writeLines( 
@@ -65,6 +69,7 @@ ftp=function(action="get",filename="nicoda.csv",host="ftp.rilevazionecosti.org",
     c(paste("open", host),
       user,
       psw,
+      if (year_local!="") paste("cd",year_local),
       paste(action, filename),
       "bye"
     ),
@@ -74,3 +79,5 @@ ftp=function(action="get",filename="nicoda.csv",host="ftp.rilevazionecosti.org",
   # esegui bat
   system2(paste0(temp_dir,"\\nicoda_hist.bat"))
 }
+
+year_local=fread(pastedir(wd,"source/year"))$V1

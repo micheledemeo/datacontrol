@@ -4,7 +4,16 @@ source( paste(getwd(), "source/ini_fun.R", sep="/"),loc=T )
 withProgress(message = "Download from remote server:",
 {
   n=20
-  if( !system(paste("ping -n 1 www.google.com")) &  !file.exists(paste(getwd(),"source/stopdownload.uti",sep="/")) )  system2("C:/nisea/batch/AggiornamentoDB.bat")
+  if( !system(paste("ping -n 1 www.google.com")) &  !file.exists(paste(getwd(),"source/stopdownload.uti",sep="/")) ) {
+    
+    ftp(action = "get",filename = "niseaYYYY.sql",year_local=year_local )
+    writeLines( 
+      paste0("C:\\wamp\\bin\\mysql\\mysql5.6.17\\bin\\mysql.exe -u nisea --password=n1s34 nisea < ",temp_dir_nicoda,"\\nisea", year_local, ".sql"),
+      con=paste0(temp_dir_nicoda,"\\update_nisea.bat")  
+    )
+    system2(paste0(temp_dir_nicoda,"\\update_nisea.bat"))
+    
+  }  
 
   for (i in 1:n) {
     incProgress(1/n, detail =  sample(9000:70000,1) )

@@ -1,6 +1,8 @@
-if( file.exists(pastedir(Sys.getenv("LOCALAPPDATA"),"/ricavi_campionari_fak")) ) {
+if( file.exists(pastedir(wd,"source/ricavi_campionari_fak")) ) {
 
-  fak=fread( pastedir(Sys.getenv("LOCALAPPDATA"),"/ricavi_campionari_fak") )
+  fak=fread( pastedir(wd,"source/ricavi_campionari_fak") )
+  fak[,id_battello:=as.integer(id_battello)]
+  fak = fak[!is.na(id_battello)]
   setkey(fak,id_battello)
   setkey(d,id_battello)
   d=fak[d]

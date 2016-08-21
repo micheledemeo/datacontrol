@@ -1,29 +1,38 @@
-wd=getwd()
-
-# load year
-year_local=fread(pastedir(wd,"source/year"))$V1
 
 # elenco bat_riltelli per controllo consegne ####
 bat_ril=fread_mysql(tbname = 'battelli_rilevatori')
 bat_ril=bat_ril[ anno==year_local, list(id_battello ,id_rilevatore)]
+bat_ril[,c('id_battello','id_rilevatore'):=list(as.integer(id_battello),as.integer(id_rilevatore))]
 setkey(bat_ril, id_battello)
+bat_ril = bat_ril[.(bat_ril[,unique(id_battello)]),mult="last"]
 
 # importa tab di aggregazioni voci di costo, genera flotta per pesi, genera all data.table ####
 aggrega_var=fread(pastedir(wd,"source/aggrega_var"),select = c('variable','var'))
 all=fread_mysql(tbname = 'battelli')
-all=all[grepl(year_local,data_riferimento), .(id_battello=id,id_strato,numero_ue,lft)]
-setkey(all,id_battello)
+all=all[, .(id_battello=id,id_strato,numero_ue,lft)]
+all[,c('id_battello','id_strato'):=list(as.integer(id_battello),as.integer(id_strato))]
+suppressWarnings(all[,numero_ue:=as.integer(numero_ue)])
+all[is.na(id_strato),id_strato:=0]
+setkey(all, id_battello)
+all=all[.(all[,unique(id_battello)]),mult="last"]
 all=all[bat_ril,nomatch=0][,i:=0]
-bat_ril=bat_ril[ all[,list(id_battello,id_strato)] ]
+bat_ril=bat_ril[ all[,list(id_battello,id_strato)],nomatch=0 ]
 # crea flotta per calcolo pesi
 flotta=fread(pastedir(wd,"source/flotta"))
+flotta[,c('id_strato'):=list(as.integer(id_strato))]
+suppressWarnings(flotta[,numero_ue:=as.integer(numero_ue)])
+flotta=flotta[!is.na(numero_ue)]
+setkey(flotta, numero_ue)
+flotta=flotta[.(flotta[,unique(numero_ue)]),mult="last"]
+if ( nrow(flotta[lft==0])>0 ) flotta[lft==0 , lft:=flotta[lft>0,mean(lft)] ]
 
 if ( file.exists(pastedir(wd,"source/data_current_year")) ) {
   cy=fread(pastedir(wd,"source/data_current_year"))
+  cy[,id_strato:=as.integer(id_strato)]
 }
 
 if ( nrow(all[lft==0])>0 ) {
-  all2=all[lft==0]
+  all2=all[lft==0 & !is.na(numero_ue)]
   setkey(all2, numero_ue)
   setkey(flotta, numero_ue)
   flotta2=all2[flotta, nomatch=0][,list(id_battello, lft=i.lft)]
@@ -37,12 +46,22 @@ if ( nrow(all[lft==0])>0 ) {
 }
 
 setkey(flotta, id_strato)
-flotta = flotta[ .(all[, unique(id_strato)]) ]
+flotta = flotta[ .(all[, unique(id_strato)]), nomatch=0 ]
 flotta=flotta[,list(numero_ue,id_strato,lft,id_battello=0)]
 flotta = rbindlist( list(flotta,all[,list(numero_ue,id_strato,lft,id_battello)] ) )
 setkey(flotta, numero_ue,id_battello)
 flotta = flotta[.(unique(numero_ue)), mult="last"]
 all[,lft:=NULL]
+#rimuovo strati con un solo battello campionario
+strati_battello_unico = flotta[,.(sum(ifelse(id_battello>0,1,0)),.N),keyby=id_strato][V1==1 & N>1,id_strato]
+if(length(strati_battello_unico)>0){
+  print("*****************************************************************************************************")
+  print("I SEGUENTI STRATI NON CENSUARI, HANNO UNA SOLO UNITA' CAMPIONARIA E VENGONO RIMOSSI:")
+  print(strati_battello_unico)
+  print("*****************************************************************************************************")
+  all = all[!id_strato %in% strati_battello_unico]
+  flotta = flotta[!id_strato %in% strati_battello_unico]
+}
 cj=aggrega_var[,.(i=0,var=unique(var))]
 setkey(cj,i)
 setkey(all,i)
@@ -51,7 +70,10 @@ rm(cj)
 
 # importa labels per strati ####
 s=fread_mysql(tbname = 'strati')
-s=s[anno==year_local][,c('anno','id'):=NULL]
+s[,id_strato:=as.integer(id_strato)]
+setkey(s, id_strato, anno)
+s=s[.(s[,unique(id_strato)]), mult="last"][,c('anno','id'):=NULL]
+setkey(s,NULL)
 setkey(all, id_strato)
 setkey(s, id_strato)
 all=s[all]
@@ -60,6 +82,7 @@ all[is.na(regione), (c('regione','codsis199', 'codlft199', 'gsa', 'descrizione')
 
 # importa dati per yoy in waterfall ####
 yoy=fread(pastedir(wd,"source/yoy"),select = c('id_strato','carbur','alcova','spcom','alcofi','spmanu','lavoro','proflor','ricavi','giorni') ) 
+yoy[,id_strato:=as.integer(id_strato)]
 yoy=melt(yoy,id.vars = 1, measure.vars = (2:ncol(yoy)), variable.factor = F,variable.name = "var", value.name = "yoy_value")
 setkey(yoy, id_strato)
 yoy=s[yoy][,descrizione:=NULL]
@@ -68,6 +91,7 @@ rm(s)
 # importa dati mensili ####
 d_mensili=fread_mysql(tbname = 'schede_mensili')
 d_mensili=d_mensili[anno==year_local]
+d_mensili[,c('id_battello','id_rilevatore','id_strato'):=list(as.integer(id_battello),as.integer(id_rilevatore),as.integer(id_strato))]
 # crea control_var_mensili table con variabili che non vanno usate in melt, ma aggregate a parte e messe in join
 control_var_mensili=d_mensili[,list(giorni_mare=sum2(giorni_mare),equipaggio_medio=ifelse(sum2(giorni_mare)==0,mean(equipaggio_medio),sum2(equipaggio_medio*giorni_mare)/sum2(giorni_mare)) ,volume_carburante=sum2(volume_carburante+volume_lubrificante) ),keyby=.(id_battello)]
 vars=fread(pastedir(wd,"source/vars_schede_mensili"),header = F)
@@ -99,6 +123,7 @@ d_mensili[is.na(value), value:=0]
 # importa dati annuali ####
 d_annuali=fread_mysql(tbname = 'schede_annuali')
 d_annuali=d_annuali[anno==year_local]
+d_annuali[,c('id_battello','id_rilevatore','id_strato'):=list(as.integer(id_battello),as.integer(id_rilevatore),as.integer(id_strato))]
 # crea control_var_mensili table con variabili che non vanno usate in melt, ma aggregate a parte e messe in join
 control_var_annuali=d_annuali[,list(Valore_di_mercato_del_battello=mean(Valore_di_mercato_del_battello),Numero_di_proprietari_del_battello=mean(Numero_di_proprietari_del_battello)),keyby=.(id_battello)]
 vars=fread(pastedir(wd,"source/vars_schede_annuali"),header = F)
@@ -155,7 +180,7 @@ parte_fisso=parte_fisso[,list(id_battello,percentuale_alla_parte=round(percentua
 setkey(parte_fisso, id_battello)
 stima_retribuzione_lorda=parte_fisso[stima_retribuzione_lorda]
 stima_retribuzione_lorda[is.na(percentuale_alla_parte), percentuale_alla_parte:=.5]
-stima_retribuzione_lorda=stima_retribuzione_lorda[, ret_lor:=as.integer(round(percentuale_alla_parte*monte,0))][,list(id_battello, ret_lor)]
+stima_retribuzione_lorda=stima_retribuzione_lorda[, ret_lor:=as.numeric(round(percentuale_alla_parte*monte,0))][,list(id_battello, ret_lor)]
 setkey(d, id_battello)
 setkey(stima_retribuzione_lorda, id_battello)
 d=stima_retribuzione_lorda[d]
@@ -229,6 +254,7 @@ rm(ricavi)
 # deriva elenco rilevatori ####
 ril_dt=all[,.N,keyby=id_rilevatore]
 ril_cognome=fread_mysql(tbname = 'rilevatori',integer64="character")[,list(id,cognome)]
+ril_cognome[,id:=as.integer(id)]
 setnames(ril_cognome, 'id', 'id_rilevatore')
 setkey(ril_cognome, id_rilevatore)
 ril_dt=ril_cognome[ril_dt][,N:=NULL]
@@ -243,30 +269,36 @@ strato_battello=all[,.N,keyby=list(id_battello,id_strato)][,N:=NULL]
 # value è il campo usato nelle visualizzazioni grafiche. è pari a value_or (default) se "Keep outliers in your charts", mentre diventa pari a value_ok quando "Take a tour with imputations"
 
 all[,c('value_ok','value_or','parameter_ok','parameter_or','is_ok','hist_is_ok','notes'):=list(value,value,parameter,parameter,0,as.numeric(NA),"") ]
+#value_ok : numeric
+#value_or: numeric
+#parameter_ok : numeric
+#parameter_or : numeric
+#is_ok : numeric
+#hist_is_ok : numeric
+#notes : char
 
 # verifico se c'è un nicoda in ftp (faccio il get e verifico se esiste in locale)), quindi lo importo e aggiorno all (in tal caso infatti nicoda.csv è più recente di dati in tabella). 
 # Se non c'è in ftp, importo da db e aggiorno all
-ftp(action = "get")
-if( file.exists(paste0(temp_dir_nicoda,"\\nicoda.csv")) && length(readLines(paste0(temp_dir_nicoda,"\\nicoda.csv"),n = 1))>0 ) {
-  hist=fread( paste0(temp_dir_nicoda,"\\nicoda.csv") , sep=";")
+ftp(action = "get",filename = "nicodaYYYY.csv",year_local=year_local )
+nicoda_filename = paste0(temp_dir_nicoda,"\\nicoda", year_local,".csv")
+if( file.exists(nicoda_filename )  && length(readLines(nicoda_filename,n = 1))>0 ) {
+  hist=fread( nicoda_filename , sep=";")
   setnames(hist, names(hist), c('id_battello','var','day','year','pr_i','hist_value','hist_parameter','hist_notes','closing_session'))
-  
 } else {
   hist=fread_mysql(tbname = 'nicoda')
 }
+hist[,c('id_battello','hist_value','hist_parameter'):=list(as.integer(id_battello),as.numeric(round(hist_value,0)),as.numeric(hist_parameter))]
 
-if(nrow(hist)>0){
+if(nrow(hist[hist_notes!="control record"])>0){
   hist=hist[hist_notes!="control record"]
   hist_join=hist[,list(id_battello,var,hist_value,hist_parameter,hist_notes,closing_session)]
-  hist_join[,c('id_battello','var','hist_value','hist_parameter','hist_notes','closing_session'):=list(as.integer(id_battello),as.character(var),as.integer(round(hist_value,0)),as.numeric(hist_parameter),as.character(hist_notes),as.character(closing_session))]
   setkey(hist_join, id_battello,var)
   setkey(all, id_battello,var)
-  hist_join[,hist_parameter:=as.numeric(hist_parameter)]
   all=hist_join[all]
-  all[!is.na(hist_value), (c('value_ok','parameter_ok','notes','is_ok','hist_is_ok')):=list(hist_value,hist_parameter,hist_notes,1L,1L)]
+  all[!is.na(hist_value), (c('value_ok','parameter_ok','notes','is_ok','hist_is_ok')):=list(hist_value,hist_parameter,hist_notes,1,1)]
   rm(hist_join)
 } else {
-  all[,c('hist_value','hist_parameter','hist_notes','hist_is_ok'):=list(NA)]
-  hist=data.table(id_battello=0L,var="",hist_value=0L,hist_parameter=0.,hist_notes="",closing_session="")[0]
+  all[,c('hist_value','hist_parameter','hist_notes','hist_is_ok'):=list(as.numeric(NA),as.numeric(NA),as.character(NA),as.numeric(NA) )]
+  hist=data.table(id_battello=0L,var="",hist_value=.0,hist_parameter=.0,hist_notes="",closing_session="")[0]
 }
 
