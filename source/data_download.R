@@ -8,7 +8,7 @@ withProgress(message = "Download from remote server:",
     
     ftp(action = "get",filename = "niseaYYYY.sql",year_local=year_local )
     writeLines( 
-      paste0("C:\\wamp\\bin\\mysql\\mysql5.6.17\\bin\\mysql.exe -u nisea --password=n1s34 nisea < '",temp_dir_nicoda,"\\nisea", year_local, ".sql'"),
+      paste0('C:\\wamp\\bin\\mysql\\mysql5.6.17\\bin\\mysql.exe -u nisea --password=n1s34 nisea < "',temp_dir_nicoda,"\\nisea", year_local, '.sql"'),
       con=paste0(temp_dir_nicoda,"\\update_nisea.bat")  
     )
     system2(paste0(temp_dir_nicoda,"\\update_nisea.bat"))
