@@ -20,6 +20,7 @@ universe_data=reactive({
   setkey(out,id_battello)
   setkey(pr_i,id_battello)
   out=pr_i[out]
+  out[is.na(pr_i),pr_i:=Inf]
 
   # refresh di pr_i
   if( input_not_sent_as_0()==1 ) {

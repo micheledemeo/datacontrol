@@ -2,8 +2,7 @@
 temp_dir_nicoda=paste0(Sys.getenv("LOCALAPPDATA"),"\\Nicoda")
 unlink(temp_dir_nicoda, recursive = T, force = T)
 dir.create(temp_dir_nicoda)
-
-wd=getwd()
+pastedir=function(...) paste(..., sep="/")
 
 # inizialization for wd and libraries
 session_info=paste(Sys.info()['nodename'], Sys.info()['user'], strftime(Sys.time(),"%Y-%m-%d-%X"), sep="|")
@@ -11,6 +10,10 @@ require(shiny)
 require(data.table)
 require(reshape2)
 require(ggplot2)
+
+wd=getwd()
+year_local=fread(pastedir(wd,"source/year"))$V1
+wdy = pastedir(wd,"source",year_local)
 
 sum2=function(...,na.rm=T) sum(...,na.rm=na.rm)
 
@@ -45,7 +48,6 @@ fread_mysql = function( tbname , dbname="nisea" , user="nisea", psw="n1s34", csv
   
 }
 
-pastedir=function(...) paste(..., sep="/")
 write.table.ok =  function(...) write.table(... , sep=";", row.names=FALSE,na="",quote=F)
 
 source("C:/Program Files/R/R-3.1.1/_nisea/hvServer.R")
@@ -79,5 +81,3 @@ ftp=function(action="get",filename="nicodaYYYY.csv",year_local="",host="ftp.rile
   # esegui bat
   system2(paste0(temp_dir,"\\nicoda_hist.bat"))
 }
-
-year_local=fread(pastedir(wd,"source/year"))$V1

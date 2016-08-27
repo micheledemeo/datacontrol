@@ -81,6 +81,7 @@ output$imp_m_universe=renderDataTable({
     setkey(imp_m_universe,id_battello)
     setkey(pr_i,id_battello)
     imp_m_universe=pr_i[imp_m_universe]
+    imp_m_universe[is.na(pr_i),pr_i:=Inf]
     
     # refresh di pr_i
     if( input_not_sent_as_0()==1 ) {

@@ -1,6 +1,6 @@
-if( file.exists(pastedir(wd,"source/ricavi_campionari_fak")) ) {
+if( file.exists(pastedir(wdy,"ricavi_campionari_fak")) ) {
 
-  fak=fread( pastedir(wd,"source/ricavi_campionari_fak") )
+  fak=fread( pastedir(wd,"ricavi_campionari_fak") )
   fak[,id_battello:=as.integer(id_battello)]
   fak = fak[!is.na(id_battello)]
   setkey(fak,id_battello)

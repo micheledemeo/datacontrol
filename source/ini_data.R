@@ -7,7 +7,7 @@ setkey(bat_ril, id_battello)
 bat_ril = bat_ril[.(bat_ril[,unique(id_battello)]),mult="last"]
 
 # importa tab di aggregazioni voci di costo, genera flotta per pesi, genera all data.table ####
-aggrega_var=fread(pastedir(wd,"source/aggrega_var"),select = c('variable','var'))
+aggrega_var=fread(pastedir(wdy,"aggrega_var"),select = c('variable','var'))
 all=fread_mysql(tbname = 'battelli')
 all=all[, .(id_battello=id,id_strato,numero_ue,lft)]
 all[,c('id_battello','id_strato'):=list(as.integer(id_battello),as.integer(id_strato))]
@@ -18,7 +18,7 @@ all=all[.(all[,unique(id_battello)]),mult="last"]
 all=all[bat_ril,nomatch=0][,i:=0]
 bat_ril=bat_ril[ all[,list(id_battello,id_strato)],nomatch=0 ]
 # crea flotta per calcolo pesi
-flotta=fread(pastedir(wd,"source/flotta"))
+flotta=fread(pastedir(wdy,"flotta"))
 flotta[,c('id_strato'):=list(as.integer(id_strato))]
 suppressWarnings(flotta[,numero_ue:=as.integer(numero_ue)])
 flotta=flotta[!is.na(numero_ue)]
@@ -26,8 +26,8 @@ setkey(flotta, numero_ue)
 flotta=flotta[.(flotta[,unique(numero_ue)]),mult="last"]
 if ( nrow(flotta[lft==0])>0 ) flotta[lft==0 , lft:=flotta[lft>0,mean(lft)] ]
 
-if ( file.exists(pastedir(wd,"source/data_current_year")) ) {
-  cy=fread(pastedir(wd,"source/data_current_year"))
+if ( file.exists(pastedir(wdy,"data_current_year")) ) {
+  cy=fread(pastedir(wdy,"data_current_year"))
   cy[,id_strato:=as.integer(id_strato)]
 }
 
@@ -81,7 +81,7 @@ all[,gsa:=as.character(gsa)]
 all[is.na(regione), (c('regione','codsis199', 'codlft199', 'gsa', 'descrizione')):=list("UNKNOWN")]
 
 # importa dati per yoy in waterfall ####
-yoy=fread(pastedir(wd,"source/yoy"),select = c('id_strato','carbur','alcova','spcom','alcofi','spmanu','lavoro','proflor','ricavi','giorni') ) 
+yoy=fread(pastedir(wdy,"yoy"),select = c('id_strato','carbur','alcova','spcom','alcofi','spmanu','lavoro','proflor','ricavi','giorni') ) 
 yoy[,id_strato:=as.integer(id_strato)]
 yoy=melt(yoy,id.vars = 1, measure.vars = (2:ncol(yoy)), variable.factor = F,variable.name = "var", value.name = "yoy_value")
 setkey(yoy, id_strato)
@@ -94,7 +94,7 @@ d_mensili=d_mensili[anno==year_local]
 d_mensili[,c('id_battello','id_rilevatore','id_strato'):=list(as.integer(id_battello),as.integer(id_rilevatore),as.integer(id_strato))]
 # crea control_var_mensili table con variabili che non vanno usate in melt, ma aggregate a parte e messe in join
 control_var_mensili=d_mensili[,list(giorni_mare=sum2(giorni_mare),equipaggio_medio=ifelse(sum2(giorni_mare)==0,mean(equipaggio_medio),sum2(equipaggio_medio*giorni_mare)/sum2(giorni_mare)) ,volume_carburante=sum2(volume_carburante+volume_lubrificante) ),keyby=.(id_battello)]
-vars=fread(pastedir(wd,"source/vars_schede_mensili"),header = F)
+vars=fread(pastedir(wdy,"vars_schede_mensili"),header = F)
 vars=c("id_battello","mensilita",vars$V1)
 # salvo info su percentuale_alla_parte
 parte_fisso=d_mensili[percentuale_alla_parte>0,list(id_battello,percentuale_alla_parte)]
@@ -119,6 +119,7 @@ options(warn=0)
 sample_rate=copy(d_mensili)
 d_mensili=d_mensili[,list(value=sum2(value)), keyby=.(id_battello,variable)]
 d_mensili[is.na(value), value:=0]
+d_mensili[,value:=as.numeric(value)]
 
 # importa dati annuali ####
 d_annuali=fread_mysql(tbname = 'schede_annuali')
@@ -126,7 +127,7 @@ d_annuali=d_annuali[anno==year_local]
 d_annuali[,c('id_battello','id_rilevatore','id_strato'):=list(as.integer(id_battello),as.integer(id_rilevatore),as.integer(id_strato))]
 # crea control_var_mensili table con variabili che non vanno usate in melt, ma aggregate a parte e messe in join
 control_var_annuali=d_annuali[,list(Valore_di_mercato_del_battello=mean(Valore_di_mercato_del_battello),Numero_di_proprietari_del_battello=mean(Numero_di_proprietari_del_battello)),keyby=.(id_battello)]
-vars=fread(pastedir(wd,"source/vars_schede_annuali"),header = F)
+vars=fread(pastedir(wdy,"vars_schede_annuali"),header = F)
 vars=c("id_battello",vars$V1)
 d_annuali=d_annuali[,vars,with=F]
 
@@ -153,6 +154,7 @@ options(warn=0)
 sample_rate = rbindlist(list(sample_rate,d_annuali),fill = T)
 d_annuali=d_annuali[,list(value=sum2(value)), keyby=.(id_battello,variable)]
 d_annuali[is.na(value), value:=0]
+d_annuali[, value:=as.numeric(value)]
 
 # union mensili e annuali
 d=rbindlist(list(d_mensili,d_annuali))

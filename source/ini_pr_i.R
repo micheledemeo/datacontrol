@@ -6,6 +6,7 @@ flotta[is.na(sent) , sent:=0]
 # strati con almeno un sent=0 e almeno 2 unità con sent=1
 flotta[,remove_to_hv:=0]
 setkey(flotta, id_strato,sent)
+#str_sent: strati con almeno un campionario inviato. Mettendo sent=0, i battelli campionari di questo strato che hanno sent=0(non inviati), vanno eliminati dal calcolo
 str_sent=flotta[,sum(sent), by=id_strato][V1>1,.(id_strato,sent=0)]
 setkey(str_sent, id_strato,sent)
 # tag per battelli campionari da non considerare nel calcolo hv, essendoci nello strato almeno due unità con sent=1 che possono esser usati come proxy per le mancate risposte (ib_battello>0 & sent=0)
@@ -36,7 +37,8 @@ if ( exists("cy") ) {
   ric=all[var=="ricavi", list(id_battello,id_strato,value)]
   setkey(ric,id_battello)
   setkey(pr_i,id_battello)
-  ric=pr_i[ric][,ric_esp_nisea:=sum(value/pr_i),by=id_strato]
+  #nomatch = 0 => esclude i battelli che vengono rimossi perché non inviati, ma presenti in strati che in cui ci sono almeno 2 inviati
+  ric=pr_i[ric,nomatch=0][,ric_esp_nisea:=sum(value/pr_i),by=id_strato]
   setkey(ric,id_strato)
   ric=cy[ric]
   ric[is.na(ricavi), ricavi:=ric_esp_nisea] # corr_fact will be 1 for that
